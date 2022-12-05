@@ -1,3 +1,5 @@
 .idea
 .venv
 CityFlow
+cityflow_config/replays/*
+__pycache__
