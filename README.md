@@ -27,7 +27,7 @@ CityFlow is the traffic simulator used for this project. It can be installed wit
 ```
 sudo apt update && sudo apt install -y build-essential cmake
 git clone https://github.com/cityflow-project/CityFlow.git
-pip install CityFlow
+pip install ./CityFlow
 ```
 
 The project's requirements can now be installed using
