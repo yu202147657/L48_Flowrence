@@ -23,3 +23,6 @@ class Graph:
         if index not in self.adjacency_list.keys():
             self.adjacency_list[index] = set()
         self.adjacency_list[index] = set(items)
+
+    def keys(self) -> Set[T]:
+        return set(self.adjacency_list.keys())
