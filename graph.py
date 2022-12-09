@@ -18,11 +18,14 @@ class Graph:
     def __getitem__(self, index: T) -> Set[T]:
         return self.adjacency_list[index]
 
-    # Slightly iffy
+    # Slightly buggy - doesn't take into account edges into index.
     def __setitem__(self, index: T, items: Iterable[T]) -> None:
         if index not in self.adjacency_list.keys():
             self.adjacency_list[index] = set()
         self.adjacency_list[index] = set(items)
+
+    def __iter__(self):
+        yield from self.adjacency_list.keys()
 
     def keys(self) -> Set[T]:
         return set(self.adjacency_list.keys())
