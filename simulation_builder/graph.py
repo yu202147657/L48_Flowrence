@@ -3,11 +3,15 @@ from typing import List, TypeVar, Tuple, Set, Iterable, Dict
 T = TypeVar("T")
 
 
-# Adjacency-list based Graph data structure
 class Graph:
+	"""
+	Data structure for undirected graph, using adjacency list representation. Will automatically generate reversed
+	edges for each edge given to constructor (i.e. specifying Graph([1, 2], (1, 2)) will generate edges (1, 2)
+	and (2, 1).
+	"""
+
 	def __init__(self, vertices: List[T], edges: List[Tuple[T, T]]):
 		self.adjacency_list = {v: set() for v in vertices}
-		# Graphs are undirected
 		for (u, v) in edges:
 			self.adjacency_list[u].add(v)
 			self.adjacency_list[v].add(u)
@@ -31,9 +35,14 @@ class Graph:
 		return set(self.adjacency_list.keys())
 
 
-# Data structure for storing/computing information about roads
+# TODO: Review whether to put in separate file
 class Road:
-	def __init__(self, start: (int, int), end: (int, int)):
+	"""
+	Data structure for storing/computing information about roads, such as the start/end points, direction and
+	JSON representation.
+	"""
+
+	def __init__(self, start: (int, int), end: (int, int), lane_width: int = 4, max_speed: int = 20):
 		self.start = start
 		self.end = end
 
@@ -53,9 +62,8 @@ class Road:
 			self.direction = 2
 			self._direction_name = "W"
 
-		# TODO: allow customisation of these
-		self.lane_width = 4
-		self.max_speed = 20
+		self.lane_width = lane_width
+		self.max_speed = max_speed
 		self.num_lanes = 3
 
 	def name(self) -> str:

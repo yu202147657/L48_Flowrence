@@ -1,20 +1,18 @@
 import math
+from typing import Dict
 
-from graph import Graph
+from simulation_builder.graph import Graph
 import heapq as hq
 
 
-def all_pairs_shortest_paths(g: Graph):
+def all_pairs_shortest_paths(g: Graph) -> Dict[Dict]:
     """
+    Args:
+        g: An undirected Graph
 
-    Parameters
-    ----------
-    g
-
-    Returns
-    -------
-    A dictionary of dictionaries of paths, where each one represents the shortest path between an
-    endpoint and all other endpoints.
+    Returns:
+        A dictionary of dictionaries of paths, where each one represents the shortest path between an
+        endpoint and all other endpoints.
     """
 
     endpoints = [v for v in g.keys() if len(g[v]) == 1]

@@ -1,7 +1,13 @@
 import math
 
 from CityFlow.tools.generator.generate_json_from_grid import pointToDict3
-from graph import Road
+from simulation_builder.graph import Road
+
+"""
+All adapted from CityFlow's generate_json_from_grid.py. 
+
+Used to generate smooth paths between lanes at intersections.
+"""
 
 
 def get_lane_shift(lane_index: int, lane_width: float = 4.0):
