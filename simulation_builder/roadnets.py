@@ -4,10 +4,10 @@ from simulation_builder.geometry import find_path
 from simulation_builder.graph import Graph, Road
 
 
-def graph_to_roadnet(g: Graph, intersection_width=10, lane_width=4, lane_speed=20) -> Dict:
+def graph_to_roadnet(g: Graph, intersection_width=50, lane_width=4, lane_speed=20) -> Dict:
 	"""
 	Returns:
-	 	A dictionary represented the roadnet generated from g.
+	 	A dictionary representing the roadnet generated from g.
 	"""
 	roads = []
 
@@ -40,7 +40,7 @@ def gen_intersections(g: Graph, intersection_width=50, lane_width=4, lane_speed=
 		}
 
 		# u is virtual if incoming roads have no choice of direction
-		if len(g[u]) <= 2:
+		if len(g[u]) <= 1:
 			intersection["width"] = 0
 
 			roads = [Road(u, v, lane_width, lane_speed) for v in g[u]] + \
@@ -121,7 +121,7 @@ def gen_intersections(g: Graph, intersection_width=50, lane_width=4, lane_speed=
 							lane_link = {
 								"startLaneIndex": in_lane,
 								"endLaneIndex": out_lane,
-								"points": find_path(in_road, in_lane, out_road, out_lane, 100)
+								"points": find_path(in_road, in_lane, out_road, out_lane, intersection_width)
 							}
 							road_link["laneLinks"].append(lane_link)
 

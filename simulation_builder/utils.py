@@ -112,11 +112,11 @@ def generate_roadnet(rowNum: int, colNum: int, rowDistance: int = 300, columnDis
 		})
 	json.dump(flow, open(os.path.join(directory, "flows/", flowFile), "w"), indent=4)
 
-	with open("../cityflow_config/config.json", "r") as f:
+	with open("cityflow_config/config.json", "r") as f:
 		config_file = json.load(f)
 
 	config_file["roadnetFile"] = f"roadnets/{roadnetFile}"
 	config_file["flowFile"] = f"flows/{flowFile}"
 
-	with open("../cityflow_config/config.json", "w") as f:
+	with open("cityflow_config/config.json", "w") as f:
 		json.dump(config_file, f, indent=4)

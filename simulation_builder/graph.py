@@ -88,3 +88,26 @@ class Road:
 			"startIntersection": f"intersection_{x1}_{y1}",
 			"endIntersection": f"intersection_{x2}_{y2}"
 		}
+
+
+def spiral_graph(n: int, width: int = 100) -> Graph:
+	cur = (0, 0)
+	vertices = [cur]
+	for i in range(1, n):
+		if i % 2 == 0:
+			for j in range(i):
+				cur = (cur[0] + width, cur[1])
+				vertices.append(cur)
+			for j in range(i):
+				cur = (cur[0], cur[1] + width)
+				vertices.append(cur)
+		else:
+			for j in range(i):
+				cur = (cur[0] - width, cur[1])
+				vertices.append(cur)
+			for j in range(i):
+				cur = (cur[0], cur[1] - width)
+				vertices.append(cur)
+
+	edges = [(u, v) for u, v in zip(vertices[:-1], vertices[1:])]
+	return Graph(vertices, edges)
