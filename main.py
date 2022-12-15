@@ -1,5 +1,4 @@
 import json
-import time
 
 import cityflow as cf
 
@@ -30,7 +29,5 @@ if __name__ == "__main__":
         f.write(json.dumps(flow, indent=4))
 
     eng = cf.Engine("cityflow_config/config.json", thread_num=1)
-    t1 = time.time()
     for _ in range(1000):
         eng.next_step()
-    print(time.time() - t1)
