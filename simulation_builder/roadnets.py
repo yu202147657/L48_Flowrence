@@ -142,10 +142,9 @@ def gen_intersections(g: Graph, traffic_light_phases: Optional[Dict], intersecti
             NS_road_links = set(filter(lambda i: road_links[i]["direction"] == 3, road_link_indices))
 
             light_phases = [
-                right_road_links,
                 ((EW_road_links | WE_road_links) & straight_road_links) | right_road_links,
-                ((NS_road_links | SN_road_links) & straight_road_links) | right_road_links,
                 ((EW_road_links | WE_road_links) & left_road_links) | right_road_links,
+                ((NS_road_links | SN_road_links) & straight_road_links) | right_road_links,
                 ((SN_road_links | NS_road_links) & left_road_links) | right_road_links
             ]
 
