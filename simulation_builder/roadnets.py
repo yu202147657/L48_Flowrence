@@ -7,6 +7,11 @@ from simulation_builder.graph import Graph, Road
 def graph_to_roadnet(g: Graph, traffic_light_phases: Optional[Dict] = None, intersection_width=50, lane_width=4,
                      lane_speed=20) -> Dict:
     """
+    Params:
+        g: A graph specifying road connections
+        traffic_light_phases: An (optional) dictionary, mapping each intersection to a list of traffic light phase
+                              timings.
+
     Returns:
          A dictionary representing the roadnet generated from g.
     """
