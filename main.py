@@ -1,7 +1,9 @@
 import json
 
 import cityflow as cf
+from matplotlib import pyplot as plt
 
+from metrics.metrics import CompletedJourneysMetric, WaitTimeMetric
 from simulation_builder.flows import graph_to_flow, FlowStrategy, RandomFlowStrategy, CustomEndpointFlowStrategy
 from simulation_builder.roadnets import graph_to_roadnet
 from simulation_builder.graph import Graph, spiral_graph
@@ -28,6 +30,12 @@ if __name__ == "__main__":
     with open("cityflow_config/flows/auto_flow.json", 'w') as f:
         f.write(json.dumps(flow, indent=4))
 
+    m = WaitTimeMetric()
     eng = cf.Engine("cityflow_config/config.json", thread_num=1)
     for _ in range(1000):
         eng.next_step()
+        m.update(eng)
+
+    print(m.report())
+    plt.plot(m.report().data)
+    plt.show()
