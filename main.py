@@ -1,9 +1,11 @@
 import json
 import numpy as np
 
-from metrics.useful_metrics import completed_journeys, wait_time
+from metrics.metrics import CompletedJourneysMetric, WaitTimeMetric
 import cityflow as cf
+from matplotlib import pyplot as plt
 
+from metrics.metrics import CompletedJourneysMetric, WaitTimeMetric
 from simulation_builder.flows import graph_to_flow, FlowStrategy, RandomFlowStrategy, CustomEndpointFlowStrategy
 from simulation_builder.roadnets import graph_to_roadnet
 from simulation_builder.graph import Graph, spiral_graph
@@ -18,12 +20,15 @@ import matplotlib.pyplot as plt
 import pandas
 
 class Simulator:
-    def __init__(self, g, metric = completed_journeys, steps = 1000):
+    def __init__(self, g, metric = CompletedJourneysMetric, steps = 1000):
         self.g = g
         self.metric = metric
         self.steps = steps
 
     def evaluate(self, X):
+
+        # new instance of metric for each simulation run
+        metric = self.metric()
 
         # setup traffic lights (depends on input from bo_loop)
         traffic_light_phases = {(0, 0):X.flatten().tolist()} # not robust as is
@@ -54,10 +59,12 @@ class Simulator:
             # update engine
             eng.next_step()
 
-            # compute metrics
-            metric_val = float(self.metric(eng))
+            # update metrics
+            metric.update(eng)
 
-        return np.array([[metric_val]])
+        report = metric.report()
+
+        return np.array([[report.aggregate]])
 
 def results_to_df(X,Y):
     "converts results (as np array) to dataframe"
@@ -133,3 +140,4 @@ if __name__ == "__main__":
     print()
     print('BO ON CITYFLOW, 20 ITERATIONS')
     bayesian_optimisation(simulator.evaluate, num_parameters = 4, interval = (0.1, 4), num_iterations = 20)
+
