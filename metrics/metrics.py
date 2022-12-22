@@ -9,6 +9,9 @@ class Report:
     aggregate: Number
     data: List[Number]
 
+    def __iter__(self):
+        return iter((self.aggregate, self.data))
+
 
 class Metric(ABC):
     @abstractmethod
