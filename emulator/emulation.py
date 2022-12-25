@@ -2,6 +2,7 @@ import json
 import numpy as np
 import pandas
 import cityflow as cf
+import itertools
 
 from emukit.core import ContinuousParameter
 from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
@@ -29,7 +30,6 @@ class Simulator:
         -------
         The resulting aggregate metric calculated after N simulation iterations, with traffic light timings X.
         """
-
         traffic_light_phases = {(0, 0): x.flatten().tolist()}
         roadnet = graph_to_roadnet(self.g, traffic_light_phases, intersection_width=50, lane_width=8)
 
@@ -69,6 +69,26 @@ def results_to_df(x, y):
     return pandas.DataFrame(data=d)
 
 
+def grid_search(target_function, num_parameters, interval, num_samples = 50):
+    """Searches all traffic light phase combinations for minimum value of metric"""
+    np.random.seed(42)
+
+    # calculating all possible combinations of light phases
+    # clunky at the moment (and time-consuming)
+    discrete_interval = [np.linspace(*interval, num_samples).tolist()] *num_parameters
+    x_list = [list(tup) for tup in itertools.product(*discrete_interval)]
+    y_list = []
+
+    for x in x_list:
+        y = target_function(np.asarray(x))
+        y_list.append(y.tolist()[0])
+
+    print(results_to_df(np.array(x_list), np.array(y_list)))
+
+    index = y_list.index(min(y_list))
+
+    print(x_list[index], y_list[index])
+
 def bayesian_optimisation(target_function, num_parameters, interval, num_iterations):
     np.random.seed(42)
 
@@ -95,7 +115,7 @@ def random_sampling(target_function, num_parameters, interval, num_iterations):
     for i in range(num_iterations):
         x = np.random.uniform(*interval, size=(1, num_parameters))
         x_list.append(x.tolist()[0])
-
+        print(x_list)
         y = target_function(x)
         y_list.append(y.tolist()[0])
 
