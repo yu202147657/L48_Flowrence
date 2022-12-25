@@ -5,7 +5,7 @@ import cityflow as cf
 
 from simulation_builder.flows import CustomEndpointFlowStrategy, graph_to_flow
 from simulation_builder.graph import Graph
-from emulator.emulation import Simulator, random_sampling, bayesian_optimisation, square_sum
+from emulator.emulation import Simulator, random_sampling, bayesian_optimisation, square_sum, grid_search
 from simulation_builder.roadnets import graph_to_roadnet
 
 if __name__ == "__main__":
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     for _ in range(1000):
         eng.next_step()
 
-    # simulator = Simulator(g)
+    simulator = Simulator(g)
     #
     # print()
     # print('BO on squared sum, 20 iterations')
@@ -50,3 +50,6 @@ if __name__ == "__main__":
     # print()
     # print('BO ON CITYFLOW, 20 ITERATIONS')
     # bayesian_optimisation(simulator.evaluate, num_parameters = 4, interval = (0.1, 4), num_iterations = 20)
+
+    print('GRID SEARCH ON CITYFLOW')
+    grid_search(simulator.evaluate, num_parameters = 4, interval = (0.1, 4))
