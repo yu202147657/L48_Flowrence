@@ -7,7 +7,6 @@ import itertools
 from emukit.core import ContinuousParameter
 from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
 
-from metrics.metrics import CompletedJourneysMetric
 from simulation_builder.graph import Graph
 
 from simulation_builder.roadnets import graph_to_roadnet
@@ -15,10 +14,20 @@ from simulation_builder.flows import graph_to_flow, FlowStrategy
 
 
 class Simulator:
-    def __init__(self, g: Graph, metric=CompletedJourneysMetric, steps=1000):
+    def __init__(self, g: Graph, metric, strategy=None, x_sum_to=-1, steps=1000):
+
         self.g = g
         self.metric = metric
         self.steps = steps
+
+        # flowstrategy
+        if strategy is None:
+            self.strategy = FlowStrategy()
+        else:
+            self.strategy = strategy
+
+        # where p_sum_to != -1 infer a parameter
+        self.x_sum_to = x_sum_to
 
     def evaluate(self, x):
         """
@@ -30,11 +39,20 @@ class Simulator:
         -------
         The resulting aggregate metric calculated after N simulation iterations, with traffic light timings X.
         """
+
+        # if we need to infer parameter
+        if self.x_sum_to != -1:
+
+            # compute parameter value
+            x3 = np.array([[self.x_sum_to - x.sum()]])
+
+            # concat with x
+            x = np.concatenate([x, x3], axis=1)
+
         traffic_light_phases = {(0, 0): x.flatten().tolist()}
         roadnet = graph_to_roadnet(self.g, traffic_light_phases, intersection_width=50, lane_width=8)
 
-        strategy = FlowStrategy()
-        flow = graph_to_flow(self.g, strategy)
+        flow = graph_to_flow(self.g, self.strategy)
 
         with open("cityflow_config/roadnets/auto_roadnet.json", 'w') as f:
             f.write(json.dumps(roadnet, indent=4))
@@ -56,38 +74,46 @@ class Simulator:
         return np.array([[10000 - aggregate]])
 
 
-def results_to_df(x, y):
+def results_to_df(x, y, simulator):
     """Converts results (as np array) to dataframe"""
+
+    metric_name = simulator.metric().name
 
     d = {}
 
     for i in range(x.shape[1]):
-        d[f"p{i}"] = np.array(x[:, i])
+        d[f"x{i}"] = np.array(x[:, i])
 
-    d["completed journeys"] = np.array(y).flatten()
+    d[metric_name] = np.array(y).flatten()
 
-    return pandas.DataFrame(data=d)
+    df = pandas.DataFrame(data=d)
+
+    if simulator.x_sum_to != -1:
+        # infer parameter
+        df['x3'] = simulator.x_sum_to - df.loc[:, ['x0', 'x1', 'x2']].sum(axis=1)
+
+        # reorder cols
+        df = df[df.columns[[0, 1, 2, 4, 3]]]
+
+    return df
 
 
-def grid_search(target_function, num_parameters, interval, num_samples = 50):
+def grid_search(target_function, num_parameters, interval, steps_per_axis=10):
     """Searches all traffic light phase combinations for minimum value of metric"""
     np.random.seed(42)
 
     # calculating all possible combinations of light phases
     # clunky at the moment (and time-consuming)
-    discrete_interval = [np.linspace(*interval, num_samples).tolist()] *num_parameters
+    discrete_interval = [np.linspace(*interval, steps_per_axis).tolist()] * num_parameters
     x_list = [list(tup) for tup in itertools.product(*discrete_interval)]
     y_list = []
 
     for x in x_list:
-        y = target_function(np.asarray(x))
+        y = target_function(np.asarray([x]))
         y_list.append(y.tolist()[0])
 
-    print(results_to_df(np.array(x_list), np.array(y_list)))
+    return np.array(x_list), np.array(y_list)
 
-    index = y_list.index(min(y_list))
-
-    print(x_list[index], y_list[index])
 
 def bayesian_optimisation(target_function, num_parameters, interval, num_iterations):
     np.random.seed(42)
@@ -101,7 +127,7 @@ def bayesian_optimisation(target_function, num_parameters, interval, num_iterati
     bo_loop = GPBayesianOptimization(variables_list=parameter_list, X=x_init, Y=y_init, noiseless=True)
     bo_loop.run_optimization(target_function, num_iterations)
 
-    print(results_to_df(bo_loop.model.X, bo_loop.model.Y))
+    return bo_loop.model.X, bo_loop.model.Y
 
 
 def random_sampling(target_function, num_parameters, interval, num_iterations):
@@ -115,11 +141,10 @@ def random_sampling(target_function, num_parameters, interval, num_iterations):
     for i in range(num_iterations):
         x = np.random.uniform(*interval, size=(1, num_parameters))
         x_list.append(x.tolist()[0])
-        print(x_list)
         y = target_function(x)
         y_list.append(y.tolist()[0])
 
-    print(results_to_df(np.array(x_list), np.array(y_list)))
+    return np.array(x_list), np.array(y_list)
 
 
 # Test functions

@@ -5,8 +5,12 @@ import cityflow as cf
 
 from simulation_builder.flows import CustomEndpointFlowStrategy, graph_to_flow
 from simulation_builder.graph import Graph
-from emulator.emulation import Simulator, random_sampling, bayesian_optimisation, square_sum, grid_search
+from emulator.emulation import Simulator, random_sampling, bayesian_optimisation, square_sum, grid_search, results_to_df
 from simulation_builder.roadnets import graph_to_roadnet
+
+from metrics.metrics import CompletedJourneysMetric
+from metrics.metrics import WaitTimeMetric
+
 
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
@@ -14,42 +18,34 @@ if __name__ == "__main__":
     g = Graph([(0, -400), (0, 0), (0, 400), (-400, 0), (400, 0)],
               [((0, -400), (0, 0)), ((0, 400), (0, 0)), ((-400, 0), (0, 0)), ((400, 0), (0, 0))])
 
-    strategy = CustomEndpointFlowStrategy(start_flows={(0, -400): 2,
-                                                       (0, 400): 30,
-                                                       (-400, 0): 30,
-                                                       (400, 0): 30},
-                                          end_flows={(0, -400): 30,
-                                                     (0, 400): 2,
-                                                     (-400, 0): 30,
-                                                     (400, 0): 30})
+    strategy = CustomEndpointFlowStrategy(start_flows={(0, -400): 1,
+                                                       (0, 400): 240,
+                                                       (-400, 0): 240,
+                                                       (400, 0): 240},
+                                          end_flows={(0, -400): 240,
+                                                     (0, 400): 1,
+                                                     (-400, 0): 240,
+                                                     (400, 0): 240})
 
-    roadnet = graph_to_roadnet(g, intersection_width=50, lane_width=8)
-    flow = graph_to_flow(g, strategy)
+    simulator = Simulator(g, CompletedJourneysMetric, strategy=strategy, x_sum_to=60)  # set x_sum_to != 0 to infer last parameter
 
-    with open("cityflow_config/roadnets/auto_roadnet.json", 'w') as f:
-        f.write(json.dumps(roadnet, indent=4))
+    # changes num_parameters to account for inferred
+    if simulator.x_sum_to != -1:
+        num_parameters = 3
+    else:
+        num_parameters = 4
 
-    with open("cityflow_config/flows/auto_flow.json", 'w') as f:
-        f.write(json.dumps(flow, indent=4))
+    print('\nRANDOM SAMPLING ON CITYFLOW')
+    rs_x, rs_y = random_sampling(simulator.evaluate, num_parameters, interval=(0.1, 20), num_iterations=10)
 
-    eng = cf.Engine("cityflow_config/config.json", thread_num=1)
+    print(results_to_df(rs_x, rs_y, simulator))
 
-    for _ in range(1000):
-        eng.next_step()
+    print('\nBO ON CITYFLOW')
+    bo_x, bo_y = bayesian_optimisation(simulator.evaluate, num_parameters, interval=(0.1, 20), num_iterations=10)
 
-    simulator = Simulator(g)
-    #
-    # print()
-    # print('BO on squared sum, 20 iterations')
-    # bayesian_optimisation(square_sum, num_parameters = 3, interval = (-4, 4), num_iterations = 20)
-    #
-    # print()
-    # print('RANDOM SAMPLING ON CITYFLOW, 20 ITERATIONS')
-    # random_sampling(simulator.evaluate, num_parameters = 4, interval = (0.1, 4), num_iterations = 20)
-    #
-    # print()
-    # print('BO ON CITYFLOW, 20 ITERATIONS')
-    # bayesian_optimisation(simulator.evaluate, num_parameters = 4, interval = (0.1, 4), num_iterations = 20)
+    print(results_to_df(bo_x, bo_y, simulator))
 
-    print('GRID SEARCH ON CITYFLOW')
-    grid_search(simulator.evaluate, num_parameters = 4, interval = (0.1, 4))
+    print('\nGRID SEARCH ON CITYFLOW')
+    gs_x, gs_y = grid_search(simulator.evaluate, num_parameters, interval=(0.1, 20), steps_per_axis=3)
+
+    print(results_to_df(gs_x, gs_y, simulator))

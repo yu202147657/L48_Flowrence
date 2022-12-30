@@ -27,6 +27,7 @@ class CompletedJourneysMetric(Metric):
     def __init__(self):
         self._prev_step = set()
         self._completed_journeys = [0]
+        self.name = 'completed journeys'
 
     def update(self, eng):
         curr_step = set(eng.get_vehicles(include_waiting=False))
@@ -44,6 +45,7 @@ class WaitTimeMetric(Metric):
     def __init__(self):
         self._waiting_vehicles = []
         self._total_vehicles = []
+        self.name = 'wait time'
 
     def update(self, eng):
         vehicles = eng.get_vehicles(include_waiting=False)
