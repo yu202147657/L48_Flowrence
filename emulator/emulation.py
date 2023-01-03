@@ -107,7 +107,8 @@ def grid_search(target_function, num_parameters: int, interval: Tuple[float, flo
     x_min, f_min, grid, results = scipy.optimize.brute(lambda x: target_function(np.reshape(x, (1, -1))),
                                                        ranges=(interval,) * num_parameters,
                                                        Ns=steps_per_axis,
-                                                       full_output=True)
+                                                       full_output=True,
+                                                       finish=None)
 
     results = results.flatten()
     grid = np.moveaxis(grid, 0, num_parameters).reshape(-1, num_parameters)
