@@ -1,9 +1,11 @@
 import json
+from typing import Optional, Tuple
+
 import numpy as np
 import pandas
 import cityflow as cf
-import itertools
 
+import scipy.optimize
 from emukit.core import ContinuousParameter
 from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
 
@@ -14,39 +16,38 @@ from simulation_builder.flows import graph_to_flow, FlowStrategy
 
 
 class Simulator:
-    def __init__(self, g: Graph, metric, strategy=None, x_sum_to=-1, steps=1000):
+    def __init__(self, g: Graph, metric, strategy=None, timing_period: Optional[int] = None, steps=1000):
+        """
+        Parameters
+        ----------
+        g:              Graph of roadnet to run simulation on
+        metric:         Metric class to be instantiated upon evaluation, and updated each iteration of the simulation
+        strategy:       Flow strategy for the simulation - defaults to uniform flow
+        timing_period:  Optional fixed duration for a full traffic light cycle. If specified, the timing of the fourth
+                        traffic phase parameter will be inferred - if not, then total duration may vary.
+        steps:          Number of steps to run the simulation for.
+        """
 
         self.g = g
         self.metric = metric
+        self.strategy = FlowStrategy() if strategy is None else strategy
+        self.timing_period = timing_period
         self.steps = steps
-
-        # flowstrategy
-        if strategy is None:
-            self.strategy = FlowStrategy()
-        else:
-            self.strategy = strategy
-
-        # where p_sum_to != -1 infer a parameter
-        self.x_sum_to = x_sum_to
 
     def evaluate(self, x):
         """
         Parameters
         ----------
-        x: An (n x m) numpy array of traffic light timings
+        x: An (n x m) numpy array of traffic light phase timings
 
         Returns
         -------
-        The resulting aggregate metric calculated after N simulation iterations, with traffic light timings X.
+        The resulting aggregate metric calculated after N simulation iterations, with traffic light timings x.
         """
 
-        # if we need to infer parameter
-        if self.x_sum_to != -1:
-
-            # compute parameter value
-            x3 = np.array([[self.x_sum_to - x.sum()]])
-
-            # concat with x
+        # Infer missing parameters if fixed timing period is specified
+        if self.timing_period is not None:
+            x3 = np.array([[self.timing_period - x.sum()]])
             x = np.concatenate([x, x3], axis=1)
 
         traffic_light_phases = {(0, 0): x.flatten().tolist()}
@@ -88,9 +89,9 @@ def results_to_df(x, y, simulator):
 
     df = pandas.DataFrame(data=d)
 
-    if simulator.x_sum_to != -1:
+    if simulator.timing_period is not None:
         # infer parameter
-        df['x3'] = simulator.x_sum_to - df.loc[:, ['x0', 'x1', 'x2']].sum(axis=1)
+        df['x3'] = simulator.timing_period - df.loc[:, ['x0', 'x1', 'x2']].sum(axis=1)
 
         # reorder cols
         df = df[df.columns[[0, 1, 2, 4, 3]]]
@@ -98,21 +99,20 @@ def results_to_df(x, y, simulator):
     return df
 
 
-def grid_search(target_function, num_parameters, interval, steps_per_axis=10):
-    """Searches all traffic light phase combinations for minimum value of metric"""
+def grid_search(target_function, num_parameters: int, interval: Tuple[float, float], steps_per_axis=10):
+    """Evaluates target_function on all combinations of parameters taken from the same interval"""
     np.random.seed(42)
 
-    # calculating all possible combinations of light phases
-    # clunky at the moment (and time-consuming)
-    discrete_interval = [np.linspace(*interval, steps_per_axis).tolist()] * num_parameters
-    x_list = [list(tup) for tup in itertools.product(*discrete_interval)]
-    y_list = []
+    # Reshape input to target_function, since scipy.optimize.brute expects function with 1D input
+    x_min, f_min, grid, results = scipy.optimize.brute(lambda x: target_function(np.reshape(x, (1, -1))),
+                                                       ranges=(interval,) * num_parameters,
+                                                       Ns=steps_per_axis,
+                                                       full_output=True)
 
-    for x in x_list:
-        y = target_function(np.asarray([x]))
-        y_list.append(y.tolist()[0])
+    results = results.flatten()
+    grid = np.moveaxis(grid, 0, num_parameters).reshape(-1, num_parameters)
 
-    return np.array(x_list), np.array(y_list)
+    return grid, results
 
 
 def bayesian_optimisation(target_function, num_parameters, interval, num_iterations):

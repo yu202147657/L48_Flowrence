@@ -22,6 +22,8 @@ class Metric(ABC):
     def report(self) -> Report:
         pass
 
+    name: str
+
 
 class CompletedJourneysMetric(Metric):
     def __init__(self):
@@ -42,6 +44,7 @@ class WaitTimeMetric(Metric):
     """
     Reports the overall average waiting time, and the proportion of cars waiting at each time step.
     """
+
     def __init__(self):
         self._waiting_vehicles = []
         self._total_vehicles = []
