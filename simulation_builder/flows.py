@@ -9,7 +9,7 @@ import heapq as hq
 
 
 class Flow:
-    def __init__(self, route: List[Tuple[int, int]], interval=2.0):
+    def __init__(self, route: List[Tuple[int, int]], interval=5.0):
         # Convert list of points to list of Roads objects
         self.route = [Road(u, v).name() for (u, v) in zip(route[:-1], route[1:])]
         self._interval = interval
