@@ -5,6 +5,7 @@ from simulation_builder.flows import CustomEndpointFlowStrategy, FlowStrategy
 from simulation_builder.graph import Graph, I_graph
 
 from metrics.metrics import CompletedJourneysMetric
+from metrics.metrics import WaitTimeMetric
 
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
@@ -28,5 +29,8 @@ if __name__ == "__main__":
 
     e = Emulator(g, strategy, fixed_time_period=60)
 
-    # print(e.bayes_opt(CompletedJourneysMetric, interval=(0.1, 20), iterations=5))
+    print(e.bayes_opt(CompletedJourneysMetric, interval=(0.1, 20), iterations=5))
+    print(e.bayes_opt(WaitTimeMetric, interval=(0.1, 20), iterations=5))
+
     print(e.grid_search_opt(CompletedJourneysMetric, interval=(0.1, 20), steps_per_axis=2))
+    print(e.grid_search_opt(WaitTimeMetric, interval=(0.1, 20), steps_per_axis=2))

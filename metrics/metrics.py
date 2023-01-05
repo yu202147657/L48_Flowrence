@@ -6,11 +6,11 @@ from typing import List
 
 @dataclass
 class Report:
-    aggregate: Number
-    data: List[Number]
+    target_metric: Number  # 'normalised' for minimisation
+    raw_metric: Number
 
     def __iter__(self):
-        return iter((self.aggregate, self.data))
+        return iter((self.target_metric, self.raw_metric))
 
 
 class Metric(ABC):
@@ -27,39 +27,70 @@ class Metric(ABC):
 
 class CompletedJourneysMetric(Metric):
     def __init__(self):
-        self._total_vehicles = set()
-        self._prev_step = set()
-        self._completed_journeys = [0]
+        self._total_vehicles = set() # unique vehicles in simulation
         self.name = 'completed journeys'
 
     def update(self, eng):
-        curr_step = set(eng.get_vehicles(include_waiting=True))
-        self._total_vehicles |= curr_step
-        self._completed_journeys.append(len(self._prev_step - curr_step) + self._completed_journeys[-1])
-        self._prev_step = curr_step
+
+        # get all vehicles currently in simulation
+        self._current_vehicles = set(eng.get_vehicles(include_waiting=True))
+
+        # add new vehicles to total count
+        self._total_vehicles |= self._current_vehicles
 
     def report(self) -> Report:
-        return Report(1 - self._completed_journeys[-1]/len(self._total_vehicles), self._completed_journeys)
+
+        # find the vehicles that had left simulator by last step
+        total_completed = len(self._total_vehicles - self._current_vehicles)
+
+        # optimisation target is 1 - (normalised total completed)
+        target_metric = 1 - total_completed / len(self._total_vehicles)
+
+        return Report(target_metric, total_completed)
 
 
 class WaitTimeMetric(Metric):
-    """
-    Reports the overall average waiting time, and the proportion of cars waiting at each time step.
-    """
-
     def __init__(self):
-        self._waiting_vehicles = []
-        self._total_vehicles = []
-        self.name = 'wait time'
+        self._unique_vehicles = set()  # unique vehicles in simulation (should be constant for given graph + flow)
+        self._waiting_vehicle_steps = []  # a vehicle step is 1 vehicle waiting for 1 step
+        self.name = 'average wait time'
 
     def update(self, eng):
-        vehicles = eng.get_vehicles(include_waiting=True)
-        wait_time = sum([float(eng.get_vehicle_info(v)['speed']) < 0.1 for v in vehicles])
-        self._total_vehicles.append(len(vehicles))
-        self._waiting_vehicles.append(wait_time)
+
+        # get all vehicles currently in simulation, including those waiting offscreen
+        current_vehicles = eng.get_vehicles(include_waiting=True)
+
+        # add new vehicles to set of unique 
+        self._unique_vehicles |= set(current_vehicles)
+
+        # find the waiting vehicles
+        waiting = 0
+        for i, v in enumerate(current_vehicles):
+
+            # get vehicle info from engine
+            info = eng.get_vehicle_info(v)
+
+            # check if car on road
+            if info['running'] == '1':
+                # get speed of car
+                speed = float(info['speed'])
+            else:
+                # cars not on road have no key 'speed'
+                speed = 0.0
+
+            # check if speed is below threshold, add to count of waiting
+            if speed < 0.1:
+                waiting += 1
+
+        # add waiting vehicles to stepwise list
+        self._waiting_vehicle_steps.append(waiting)
 
     def report(self) -> Report:
-        total_average = sum(self._waiting_vehicles) / sum(self._total_vehicles)
-        proportion_waiting = [wait / total if total > 0 else 0 for wait, total in
-                              zip(self._waiting_vehicles, self._total_vehicles)]
-        return Report(total_average, proportion_waiting)
+
+        # computes the average proportion of time vehicles spent waiting in their journey
+        total_average = sum(self._waiting_vehicle_steps) / len(self._unique_vehicles)
+
+        # divide by number of steps (can't normalise as is not bounded)
+        target_metric = total_average / len(self._waiting_vehicle_steps)
+
+        return Report(target_metric, total_average)

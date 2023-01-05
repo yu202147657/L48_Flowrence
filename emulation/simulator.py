@@ -36,6 +36,7 @@ class Simulator:
         with open("cityflow_config/flows/auto_flow.json", 'w') as f:
             f.write(json.dumps(flow, indent=4))
 
+
     def evaluate(self, x):
         """
         Parameters
@@ -72,51 +73,51 @@ class Simulator:
             eng.next_step()
             metric.update(eng)
 
-        aggregate, _ = metric.report()
+        target_metric, raw_metric = metric.report()
 
-        return np.array([[aggregate]])
+        return np.array([[target_metric]]), np.array([[raw_metric]])
 
-    def multithreaded_evaluate(self, x):
-        """
-        Parameters
-        ----------
-        x: A 1D numpy array of traffic light phase timings
+    # def multithreaded_evaluate(self, x):
+    #     """
+    #     Parameters
+    #     ----------
+    #     x: A 1D numpy array of traffic light phase timings
 
-        Returns
-        -------
-        The resulting aggregate metric calculated after N simulation iterations, with traffic light timings x.
-        """
-        x = np.array(np.array_split(x.flatten(), len(self.intersections)))
-        if self.timing_period is not None:
-            x3 = self.timing_period - x.sum(axis=1)
-            x = np.insert(x, x.shape[1] - 1, x3, axis=1)
+    #     Returns
+    #     -------
+    #     The resulting aggregate metric calculated after N simulation iterations, with traffic light timings x.
+    #     """
+    #     x = np.array(np.array_split(x.flatten(), len(self.intersections)))
+    #     if self.timing_period is not None:
+    #         x3 = self.timing_period - x.sum(axis=1)
+    #         x = np.insert(x, x.shape[1] - 1, x3, axis=1)
 
-        traffic_light_phases = {intersection: timing for (intersection, timing) in zip(self.intersections, x.tolist())}
-        roadnet = graph_to_roadnet(self.g, traffic_light_phases, intersection_width=50, lane_width=8)
+    #     traffic_light_phases = {intersection: timing for (intersection, timing) in zip(self.intersections, x.tolist())}
+    #     roadnet = graph_to_roadnet(self.g, traffic_light_phases, intersection_width=50, lane_width=8)
 
-        # Generate UUID tag to ensure each thread's config file is unique
-        name = str(uuid.uuid1())[:8]
+    #     # Generate UUID tag to ensure each thread's config file is unique
+    #     name = str(uuid.uuid1())[:8]
 
-        roadnet_file = f"cityflow_config/roadnets/auto_roadnet_{name}.json"
-        with open(roadnet_file, 'w') as f:
-            f.write(json.dumps(roadnet, indent=4))
-        config_file = f"cityflow_config/config_{name}.json"
-        with open(f"cityflow_config/config.json", 'r') as f:
-            config = json.loads(f.read())
+    #     roadnet_file = f"cityflow_config/roadnets/auto_roadnet_{name}.json"
+    #     with open(roadnet_file, 'w') as f:
+    #         f.write(json.dumps(roadnet, indent=4))
+    #     config_file = f"cityflow_config/config_{name}.json"
+    #     with open(f"cityflow_config/config.json", 'r') as f:
+    #         config = json.loads(f.read())
 
-        config["roadnetFile"] = f"roadnets/auto_roadnet_{name}.json"
-        with open(config_file, 'w') as f:
-            f.write(json.dumps(config, indent=4))
+    #     config["roadnetFile"] = f"roadnets/auto_roadnet_{name}.json"
+    #     with open(config_file, 'w') as f:
+    #         f.write(json.dumps(config, indent=4))
 
-        eng = cf.Engine(config_file, thread_num=1)
+    #     eng = cf.Engine(config_file, thread_num=1)
 
-        metric = self.metric()
+    #     metric = self.metric()
 
-        for _ in range(self.steps):
-            eng.next_step()
-            metric.update(eng)
+    #     for _ in range(self.steps):
+    #         eng.next_step()
+    #         metric.update(eng)
 
-        aggregate, _ = metric.report()
-        os.remove(roadnet_file)
-        os.remove(config_file)
-        return np.array([[aggregate]])
+    #     aggregate, _ = metric.report()
+    #     os.remove(roadnet_file)
+    #     os.remove(config_file)
+    #     return np.array([[aggregate]])
