@@ -1,12 +1,12 @@
 from typing import Tuple, Optional
 
 import numpy as np
-import pandas
 import scipy
 from emukit.core import ContinuousParameter
 from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
 
 from emulation.simulator import Simulator
+from emulation.utils import results_to_df
 
 from simulation_builder.flows import FlowStrategy
 from simulation_builder.graph import Graph
@@ -37,9 +37,9 @@ class Emulator:
         parameter_list = [ContinuousParameter(f"p{i}", *interval) for i in range(self._num_params)]
 
         bo_loop = GPBayesianOptimization(variables_list=parameter_list, X=x_init, Y=y_init, noiseless=True)
-        bo_loop.run_optimization(lambda x: sim.evaluate(x.flatten()), iterations)
+        bo_loop.run_optimization(sim.evaluate, iterations)
 
-        return self.results_to_df(bo_loop.model.X, bo_loop.model.Y, metric().name)
+        return results_to_df(bo_loop.model.X, bo_loop.model.Y, metric().name, self._time_period)
 
     def grid_search_opt(self, metric, interval: Tuple[float, float], steps_per_axis: int):
         """Evaluates target_function on all combinations of parameters taken from the same interval"""
@@ -47,38 +47,13 @@ class Emulator:
 
         sim = Simulator(self._g, metric, self._strategy, self._time_period, self._sim_iterations)
 
-        x_min, f_min, grid, results = scipy.optimize.brute(func=sim.multithreaded_evaluate,
+        x_min, f_min, grid, results = scipy.optimize.brute(func=sim.evaluate,
                                                            ranges=(interval,) * self._num_params,
                                                            Ns=steps_per_axis,
                                                            full_output=True,
-                                                           finish=None,
-                                                           workers=6)
-        # x_min, f_min, grid, results = scipy.optimize.brute(func=sim.evaluate,
-        #                                                    ranges=(interval,) * self._num_params,
-        #                                                    Ns=steps_per_axis,
-        #                                                    full_output=True,
-        #                                                    finish=None)
+                                                           finish=None)
 
         results = results.flatten()
         grid = np.moveaxis(grid, 0, self._num_params).reshape(-1, self._num_params)
 
-        return self.results_to_df(grid, results, metric().name)
-
-    # TODO: Move to separate results file (for dataframes and plotting)
-    def results_to_df(self, x, y, metric_name: str):
-        """Converts results (as tuple of np arrays) to dataframe"""
-        d = {}
-
-        for i in range(x.shape[1]):
-            d[f"x{i}"] = np.array(x[:, i])
-
-        d[metric_name] = np.array(y).flatten()
-
-        df = pandas.DataFrame(data=d)
-
-        if self._time_period is not None:
-            df['x3'] = self._time_period - df.loc[:, ['x0', 'x1', 'x2']].sum(axis=1)
-            # Reorder columns
-            df = df[df.columns[[0, 1, 2, 4, 3]]]
-
-        return df
+        return results_to_df(grid, results, metric().name, self._time_period)

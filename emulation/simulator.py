@@ -30,6 +30,8 @@ class Simulator:
         self.timing_period = timing_period
         self.steps = steps
 
+        self.intersections = list(sorted([v for v in self.g if len(g[v]) > 2]))
+
         flow = graph_to_flow(self.g, self.strategy)
         with open("cityflow_config/flows/auto_flow.json", 'w') as f:
             f.write(json.dumps(flow, indent=4))
@@ -46,11 +48,12 @@ class Simulator:
         """
 
         # Infer missing parameters if fixed timing period is specified
+        x = np.array(np.array_split(x.flatten(), len(self.intersections)))
         if self.timing_period is not None:
-            x3 = np.array([[self.timing_period - x.sum()]])
-            x = np.concatenate([x, x3], axis=1)
+            x3 = self.timing_period - x.sum(axis=1)
+            x = np.insert(x, x.shape[1] - 1, x3, axis=1)
 
-        traffic_light_phases = {(0, 0): x.flatten().tolist()}
+        traffic_light_phases = {intersection: timing for (intersection, timing) in zip(self.intersections, x.tolist())}
         roadnet = graph_to_roadnet(self.g, traffic_light_phases, intersection_width=50, lane_width=8)
 
         flow = graph_to_flow(self.g, self.strategy)
@@ -83,13 +86,12 @@ class Simulator:
         -------
         The resulting aggregate metric calculated after N simulation iterations, with traffic light timings x.
         """
-        x = np.reshape(x, (1, -1))
-        # Infer missing parameters if fixed timing period is specified
+        x = np.array(np.array_split(x.flatten(), len(self.intersections)))
         if self.timing_period is not None:
-            x3 = np.array([[self.timing_period - x.sum()]])
-            x = np.concatenate([x, x3], axis=1)
+            x3 = self.timing_period - x.sum(axis=1)
+            x = np.insert(x, x.shape[1] - 1, x3, axis=1)
 
-        traffic_light_phases = {(0, 0): x.flatten().tolist()}
+        traffic_light_phases = {intersection: timing for (intersection, timing) in zip(self.intersections, x.tolist())}
         roadnet = graph_to_roadnet(self.g, traffic_light_phases, intersection_width=50, lane_width=8)
 
         # Generate UUID tag to ensure each thread's config file is unique
