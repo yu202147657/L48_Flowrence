@@ -2,14 +2,14 @@ import math
 from logging import warning
 
 from numpy import random
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 from simulation_builder.graph import Graph, Road
 import heapq as hq
 
 
 class Flow:
-    def __init__(self, route: List[Tuple[int, int]], interval=2.0):
+    def __init__(self, route: List[Tuple[int, int]], interval=5.0):
         # Convert list of points to list of Roads objects
         self.route = [Road(u, v).name() for (u, v) in zip(route[:-1], route[1:])]
         self._interval = interval
@@ -50,16 +50,35 @@ class RandomFlowStrategy(FlowStrategy):
 
 
 class CustomEndpointFlowStrategy(FlowStrategy):
-    def __init__(self, endpoint_flows : Dict[Tuple[int, int], float], default=2.0):
-        self._endpoint_flows = endpoint_flows
+    """
+    Defines a custom flow strategy, where the interval for a flow is determined by the maximum of the start and end
+    flow.
+
+    For example, a flow consisting of nodes [(0, 0), (0, 100), (100, 100)] with start_flows[(0, 0)] = 2 and
+    end_flows[(100, 100)] = 4 would be capped at an interval of 4 - since the endpoint (100, 100) only accepts flows
+    with a minimum interval of 4.
+
+    If no endpoint interval is specified, then no limit is applied.
+    """
+
+    def __init__(self, start_flows: Dict[Tuple[int, int], float], end_flows: Dict[Tuple[int, int], float] = None,
+                 default=2.0):
+        self._start_flows = start_flows
+        self._end_flows = end_flows if end_flows is not None else {}
         self._default = default
 
     def gen_flows(self, route: List[Tuple[int, int]]) -> List[Flow]:
         start = route[0]
-        if start in self._endpoint_flows:
-            return [Flow(route, interval=self._endpoint_flows[start])]
+        end = route[-1]
+        if start in self._start_flows:
+            start_interval = self._start_flows[start]
+            if end in self._end_flows:
+                end_interval = self._end_flows[end]
+                return [Flow(route, interval=max(start_interval, end_interval))]
+            # If no end interval specified, no lower bound is applied
+            return [Flow(route, interval=start_interval)]
         else:
-            warning(f"Custom flow strategy does not define flow interval for endpoint {start}.")
+            warning(f"Custom flow strategy does not define flow interval for source {start}.")
             return [Flow(route, interval=self._default)]
 
 

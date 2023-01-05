@@ -1,41 +1,32 @@
-import json
+import numpy as np
 
-import cityflow as cf
-from matplotlib import pyplot as plt
+from emulation.emulator import Emulator
+from simulation_builder.flows import CustomEndpointFlowStrategy, FlowStrategy
+from simulation_builder.graph import Graph, I_graph
 
-from metrics.metrics import CompletedJourneysMetric, WaitTimeMetric
-from simulation_builder.flows import graph_to_flow, FlowStrategy, RandomFlowStrategy, CustomEndpointFlowStrategy
-from simulation_builder.roadnets import graph_to_roadnet
-from simulation_builder.graph import Graph, spiral_graph
+from metrics.metrics import CompletedJourneysMetric
 
 if __name__ == "__main__":
-    g = Graph([(0, 0), (200, 0), (400, 0), (0, 400), (200, 400), (400, 400)],
-              [((0, 0), (200, 0)), ((200, 0), (400, 0)), ((200, 0), (200, 400)), ((0, 400), (200, 400)),
-               ((200, 400), (400, 400))])
+    np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
-    roadnet = graph_to_roadnet(g, intersection_width=50, lane_width=8)
+    # g = Graph([(0, -400), (0, 0), (0, 400), (-400, 0), (400, 0)],
+    #           [((0, -400), (0, 0)), ((0, 400), (0, 0)), ((-400, 0), (0, 0)), ((400, 0), (0, 0))])
+    #
+    #
+    #
+    # strategy = CustomEndpointFlowStrategy(start_flows={(0, -400): 1,
+    #                                                    (0, 400): 240,
+    #                                                    (-400, 0): 240,
+    #                                                    (400, 0): 240},
+    #                                       end_flows={(0, -400): 240,
+    #                                                  (0, 400): 1,
+    #                                                  (-400, 0): 240,
+    #                                                  (400, 0): 240})
 
-    strategy = CustomEndpointFlowStrategy({
-        (0, 0): 1.0,
-        (400, 0): 8.0,
-        (0, 400): 6.0,
-        (400, 400): 7.0
-    })
+    g = I_graph()
+    strategy = FlowStrategy()
 
-    flow = graph_to_flow(g, strategy)
+    e = Emulator(g, strategy, fixed_time_period=60)
 
-    with open("cityflow_config/roadnets/auto_roadnet.json", 'w') as f:
-        f.write(json.dumps(roadnet, indent=4))
-
-    with open("cityflow_config/flows/auto_flow.json", 'w') as f:
-        f.write(json.dumps(flow, indent=4))
-
-    m = WaitTimeMetric()
-    eng = cf.Engine("cityflow_config/config.json", thread_num=1)
-    for _ in range(1000):
-        eng.next_step()
-        m.update(eng)
-
-    print(m.report())
-    plt.plot(m.report().data)
-    plt.show()
+    # print(e.bayes_opt(CompletedJourneysMetric, interval=(0.1, 20), iterations=5))
+    print(e.grid_search_opt(CompletedJourneysMetric, interval=(0.1, 20), steps_per_axis=2))

@@ -11,7 +11,7 @@ Used to generate smooth paths between lanes at intersections.
 
 
 def get_lane_shift(lane_index: int, lane_width: float = 4.0):
-	return (lane_index + 0.5) * lane_width
+	return 2 * (lane_index + 0.5) * lane_width
 
 
 def get_road_vector(road: Road):
