@@ -4,8 +4,8 @@ from emulation.emulator import Emulator
 from simulation_builder.flows import CustomEndpointFlowStrategy, FlowStrategy
 from simulation_builder.graph import Graph, I_graph
 
-from metrics.metrics import CompletedJourneysMetric
-from metrics.metrics import WaitTimeMetric
+from metrics import CompletedJourneysMetric
+from metrics import WaitTimeMetric
 
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
