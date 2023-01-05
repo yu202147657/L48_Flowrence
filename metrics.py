@@ -53,7 +53,7 @@ class WaitTimeMetric(Metric):
     def __init__(self):
         self._unique_vehicles = set()  # unique vehicles in simulation (should be constant for given graph + flow)
         self._waiting_vehicle_steps = []  # a vehicle step is 1 vehicle waiting for 1 step
-        self.name = 'average wait time'
+        self.name = 'average steps waiting'
 
     def update(self, eng):
 
