@@ -24,7 +24,7 @@ def results_to_df(x, y, metric_name: str, time_period: Optional[float]):
             node, phase = i // 3, i % 3
             d[f"x_{node}_{phase}"] = np.array(x[:, i])
             if i % 3 == 2:
-                d[f"x_{node}_3"] = time_period - x[:, i - 2:i + 1].sum(axis=1)
+                d[f"x_{node}_3 (i)"] = time_period - x[:, i - 2:i + 1].sum(axis=1)
         else:
             node, phase = i // 4, i % 4
             d[f"x_{node}_{phase}"] = np.array(x[:, i])
