@@ -74,7 +74,7 @@ class Simulator:
 
         aggregate, _ = metric.report()
 
-        return np.array([[1 - aggregate]])
+        return np.array([[aggregate]])
 
     def multithreaded_evaluate(self, x):
         """
@@ -119,4 +119,4 @@ class Simulator:
         aggregate, _ = metric.report()
         os.remove(roadnet_file)
         os.remove(config_file)
-        return np.array([[1 - aggregate]])
+        return np.array([[aggregate]])

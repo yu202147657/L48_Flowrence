@@ -39,7 +39,7 @@ class CompletedJourneysMetric(Metric):
         self._prev_step = curr_step
 
     def report(self) -> Report:
-        return Report(self._completed_journeys[-1]/len(self._total_vehicles), self._completed_journeys)
+        return Report(1 - self._completed_journeys[-1]/len(self._total_vehicles), self._completed_journeys)
 
 
 class WaitTimeMetric(Metric):
