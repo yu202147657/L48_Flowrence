@@ -1,10 +1,12 @@
 from typing import Tuple, Optional
 
 import numpy as np
+import pandas
 import scipy
-from emukit.core import ContinuousParameter
+from emukit.core import ContinuousParameter, ParameterSpace
 from emukit.core.loop.user_function import UserFunctionWrapper
 from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
+from emukit.sensitivity.monte_carlo import MonteCarloSensitivity
 
 from emulation.simulator import Simulator
 from emulation.utils import results_to_df
@@ -64,7 +66,24 @@ class Emulator:
         x = np.stack(x, axis=0)
         raw_metric = np.concatenate(raw_metric)
 
-        return results_to_df(x, raw_metric, metric().name, self._time_period)
+        return results_to_df(x, self._time_period, raw_metric, metric().name), bo_loop.model
+
+    def sensitivity(self, bo_model, interval: Tuple[float, float], num_mc: int = 10000):
+
+        parameter_list = [ContinuousParameter(f"x{i}", *interval) for i in range(self._num_params)]
+
+        senstivity = MonteCarloSensitivity(model=bo_model, input_domain=ParameterSpace(parameter_list))
+        main_effects, total_effects, _ = senstivity.compute_effects(num_monte_carlo_points=num_mc)
+
+        # converting from dict into arrays for results_df function
+        main_effects = np.fromiter(main_effects.values(), dtype=float)
+        main_effects = np.reshape(main_effects, (1, len(main_effects)))
+
+        total_effects = np.fromiter(total_effects.values(), dtype=float)
+        total_effects = np.reshape(total_effects, (1, len(total_effects)))
+
+        return results_to_df(main_effects, self._time_period), \
+            results_to_df(total_effects, self._time_period)
 
     def grid_search_opt(self, metric, interval: Tuple[float, float], steps_per_axis: int):
         """Evaluates target_function on all combinations of parameters taken from the same interval"""
@@ -84,4 +103,4 @@ class Emulator:
         results = results.flatten()
         grid = np.moveaxis(grid, 0, self._num_params).reshape(-1, self._num_params)
 
-        return results_to_df(grid, results, metric().name, self._time_period)
+        return results_to_df(grid, self._time_period, results, metric().name)
