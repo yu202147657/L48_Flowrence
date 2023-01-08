@@ -6,6 +6,10 @@ def single_intersec_bal() -> tuple:
     return single_intersec_g(), single_intersec_f_bal()
 
 
+def single_intersec_lop() -> tuple:
+    return single_intersec_g(), single_intersec_f_lop()
+
+
 def single_intersec_g() -> Graph:
 
     vertices = [
@@ -29,17 +33,36 @@ def single_intersec_g() -> Graph:
 def single_intersec_f_bal() -> CustomEndpointFlowStrategy:
 
     start_flows={
-            (0, -400): 20,
-            (0, 400): 20,
-            (-400, 0): 20,
-            (400, 0): 20,
+            (0, -400): 10,
+            (0, 400): 10,
+            (-400, 0): 10,
+            (400, 0): 10,
             }
 
     end_flows={
-            (0, -400): 20,
-            (0, 400): 20,
-            (-400, 0): 20,
-            (400, 0): 20,
+            (0, -400): 10,
+            (0, 400): 10,
+            (-400, 0): 10,
+            (400, 0): 10,
+            }
+
+    return CustomEndpointFlowStrategy(start_flows=start_flows, end_flows=end_flows)
+
+
+def single_intersec_f_lop() -> CustomEndpointFlowStrategy:
+
+    start_flows={
+            (0, -400): 1,
+            (0, 400): 60,
+            (-400, 0): 60,
+            (400, 0): 60,
+            }
+
+    end_flows={
+            (0, -400): 60,
+            (0, 400): 1,
+            (-400, 0): 60,
+            (400, 0): 60,
             }
 
     return CustomEndpointFlowStrategy(start_flows=start_flows, end_flows=end_flows)

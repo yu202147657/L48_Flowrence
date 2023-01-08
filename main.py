@@ -2,7 +2,8 @@ import numpy as np
 
 from emulation.emulator import Emulator
 from emulation.metrics import CompletedJourneysMetric, WaitTimeMetric
-from simulation_builder.scenarios import single_intersec_bal
+from simulation_builder.scenarios import single_intersec_bal, single_intersec_lop
+
 
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
