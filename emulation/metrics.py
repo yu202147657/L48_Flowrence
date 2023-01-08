@@ -65,7 +65,7 @@ class WaitTimeMetric(Metric):
 
         # find the waiting vehicles
         waiting = 0
-        for i, v in enumerate(current_vehicles):
+        for v in current_vehicles:
 
             # get vehicle info from engine
             info = eng.get_vehicle_info(v)

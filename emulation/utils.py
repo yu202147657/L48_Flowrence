@@ -1,10 +1,10 @@
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 import pandas
 
 
-def results_to_df(x, y, metric_name: str, time_period: Optional[float]):
+def results_to_df(x, time_period: Optional[float], y: Optional[List[float]] = None, metric_name: Optional[str] = None):
     """
     Parameters
     ----------
@@ -29,7 +29,8 @@ def results_to_df(x, y, metric_name: str, time_period: Optional[float]):
             node, phase = i // 4, i % 4
             d[f"x_{node}_{phase}"] = np.array(x[:, i])
 
-    d[metric_name] = np.array(y).flatten()
+    if y is not None:
+        d[metric_name] = np.array(y).flatten()
 
     df = pandas.DataFrame(data=d)
     return df
