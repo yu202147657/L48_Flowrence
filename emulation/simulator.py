@@ -29,6 +29,7 @@ class Simulator:
         self.strategy = FlowStrategy() if strategy is None else strategy
         self.timing_period = timing_period
         self.steps = steps
+        self.simulation_num = 0
 
         self.intersections = list(sorted([v for v in self.g if len(g[v]) > 2]))
 
@@ -47,6 +48,9 @@ class Simulator:
         -------
         The resulting aggregate metric calculated after N simulation iterations, with traffic light timings x.
         """
+
+        print(f'simulation: {self.simulation_num}')
+        self.simulation_num += 1
 
         # Infer missing parameters if fixed timing period is specified
         x = np.array(np.array_split(x.flatten(), len(self.intersections)))

@@ -32,6 +32,8 @@ class Emulator:
 
     def bayes_opt(self, metric, interval: Tuple[float, float], iterations: int):
 
+        print(f'\nbayesian optimisation on {metric().name}, interval {interval} for {iterations} iterations')
+
         np.random.seed(42)
 
         sim = Simulator(self._g, metric, self._strategy, self._time_period, self._sim_iterations)
@@ -87,6 +89,8 @@ class Emulator:
 
     def grid_search_opt(self, metric, interval: Tuple[float, float], steps_per_axis: int):
         """Evaluates target_function on all combinations of parameters taken from the same interval"""
+
+        print(f'\ngrid search on {metric().name}, interval {interval} with {steps_per_axis**self._num_params} grid points')
         np.random.seed(42)
 
         sim = Simulator(self._g, metric, self._strategy, self._time_period, self._sim_iterations)
