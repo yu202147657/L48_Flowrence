@@ -4,11 +4,13 @@ import numpy as np
 import pandas
 import scipy
 
-from GPy.kern import Matern52
+from GPy.kern import Matern52, RBF
 from GPy.models import GPRegression
 
 from emukit.core import ContinuousParameter, ParameterSpace
-from emukit.core.loop.user_function import UserFunctionWrapper
+from emukit.core.loop.stopping_conditions import StoppingCondition
+from emukit.core.loop.user_function import UserFunctionWrapper, UserFunctionResult
+from emukit.core.loop.loop_state import LoopState
 from emukit.core.initial_designs import RandomDesign
 from emukit.bayesian_optimization.loops import BayesianOptimizationLoop
 from emukit.bayesian_optimization.acquisitions import ExpectedImprovement
@@ -20,6 +22,54 @@ from emulation.utils import results_to_df
 
 from simulation_builder.flows import FlowStrategy
 from simulation_builder.graph import Graph
+
+
+class ProgressStoppingCondition(StoppingCondition):
+    """
+    Stops after N iterations without improvement
+    """
+    def __init__(self, N: int, max_iterations: int) -> None:
+
+        self.N = N  
+        self.max_iterations = max_iterations
+
+        self.best = None
+        self.count = 0
+
+    def should_stop(self, loop_state: LoopState) -> bool:
+
+        # first iteration find best of start points
+        if self.best is None:
+            self.best = np.min(loop_state.Y)
+            print(f'start points: {loop_state.Y.flatten()}')
+            return False
+
+        # get current output
+        current_y = loop_state.Y[-1][0]
+
+        # new best
+        if current_y < self.best:
+            print(f'iteration {loop_state.iteration}: {current_y} - new best!')
+            self.count = 0
+            self.best = current_y
+
+        # not new best
+        else:
+            print(f'iteration {loop_state.iteration}: {current_y}')
+            self.count += 1
+
+        # if reached max_iterations return True regardless
+        if loop_state.iteration > self.max_iterations:
+            print('exceeded max iterations, stopping')
+            return True
+
+        # exceeded N
+        elif self.count > self.N:
+            print(f'stopping due to {self.N} iterations without progress')
+            return True
+
+        else:
+            return False
 
 
 class Emulator:
@@ -37,9 +87,15 @@ class Emulator:
         else:
             self._num_params = intersections * 3
 
-    def bayes_opt(self, metric, interval: Tuple[float, float], iterations: int, num_init_points: Optional[int] = 1):
+    def bayes_opt(
+            self, 
+            metric, 
+            interval: Tuple[float, float],
+            max_iterations: int,
+            progress_N: int,
+            num_init_points: Optional[int] = 1):
 
-        print(f'\nbayesian optimisation on {metric().name}, interval {interval} for {iterations} iterations {num_init_points} init points')
+        print(f'\nbayesian optimisation on {metric().name}, interval {interval} with {num_init_points} init points')
 
         np.random.seed(42)
 
@@ -88,8 +144,10 @@ class Emulator:
         for i, row in enumerate(bo_loop.loop_state.results):
             row.extra_outputs['raw metric'] = raw_metric[i]
 
+        stopping_condition = ProgressStoppingCondition(N=progress_N, max_iterations=max_iterations)
+
         # run optimisation
-        bo_loop.run_loop(target_function, iterations)
+        bo_loop.run_loop(target_function, stopping_condition)
 
         # get x and raw metric values from loop state results
         x = [step.X for step in bo_loop.loop_state.results]
