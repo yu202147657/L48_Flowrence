@@ -53,16 +53,16 @@ def single_intersec_f_lop() -> CustomEndpointFlowStrategy:
 
     start_flows={
             (0, -400): 1,
-            (0, 400): 60,
-            (-400, 0): 60,
-            (400, 0): 60,
+            (0, 400): 200,
+            (-400, 0): 250,
+            (400, 0): 300,
             }
 
     end_flows={
-            (0, -400): 60,
+            (0, -400): 200,
             (0, 400): 1,
-            (-400, 0): 60,
-            (400, 0): 60,
+            (-400, 0): 200,
+            (400, 0): 200,
             }
 
     return CustomEndpointFlowStrategy(start_flows=start_flows, end_flows=end_flows)

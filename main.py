@@ -8,16 +8,19 @@ from simulation_builder.scenarios import single_intersec_bal, single_intersec_lo
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
-    g, strategy = single_intersec_bal()
+    g, strategy = single_intersec_lop()
 
     e = Emulator(g, strategy)
 
     interval = (0.1, 20)
 
-    results, bo_model = e.bayes_opt(CompletedJourneysMetric, interval=interval, iterations=5)
-    print(results)
-    print(e.grid_search_opt(WaitTimeMetric, interval=interval, steps_per_axis=2))
+    results, bo_model = e.bayes_opt(WaitTimeMetric, interval=interval, iterations=500)
+    results.to_csv('BO.csv')
 
+    results = e.grid_search_opt(WaitTimeMetric, interval=interval, steps_per_axis=5)
+    results.to_csv('GS.csv')
+
+    breakpoint()
 
     # main_effects, total_effects = e.sensitivity(bo_model, interval=(0.1, 20))
     # print('\nSENSITIVITY ANALYSIS\n', 'Main Effects\n', main_effects)
