@@ -9,6 +9,7 @@ from GPy.models import GPRegression
 
 from emukit.core import ContinuousParameter, ParameterSpace
 from emukit.core.loop.user_function import UserFunctionWrapper
+from emukit.core.initial_designs import RandomDesign
 from emukit.bayesian_optimization.loops import BayesianOptimizationLoop
 from emukit.bayesian_optimization.acquisitions import ExpectedImprovement
 from emukit.sensitivity.monte_carlo import MonteCarloSensitivity
@@ -36,9 +37,9 @@ class Emulator:
         else:
             self._num_params = intersections * 3
 
-    def bayes_opt(self, metric, interval: Tuple[float, float], iterations: int):
+    def bayes_opt(self, metric, interval: Tuple[float, float], iterations: int, num_init_points: Optional[int] = 1):
 
-        print(f'\nbayesian optimisation on {metric().name}, interval {interval} for {iterations} iterations')
+        print(f'\nbayesian optimisation on {metric().name}, interval {interval} for {iterations} iterations {num_init_points} init points')
 
         np.random.seed(42)
 
@@ -46,16 +47,22 @@ class Emulator:
 
         target_function = UserFunctionWrapper(sim.evaluate, extra_output_names=['raw metric'])
 
-        x_init = np.random.uniform(*interval, size=(1, self._num_params))
-
-        # you can't pass the UserFunctionResult straight into BOLoop
-        output_init = target_function(x_init)[0]
-
-        # also the array for y is not the right shape
-        y_init = np.expand_dims(output_init.Y, axis=1)
-
         # parameter space
         parameter_space = ParameterSpace([ContinuousParameter(f"x{i}", *interval) for i in range(self._num_params)])
+
+        # random sample init points
+        design = RandomDesign(parameter_space)
+        x_init = design.get_samples(num_init_points)
+
+        # evaluate at all init points, and prep for input to BOLoop
+        y_init = []
+        raw_metric = []
+        for i in range(x_init.shape[0]):
+            output = target_function(x_init[i:i+1])[0]
+            y_init.append(np.expand_dims(output.Y, axis=1))
+            raw_metric.append(output.extra_outputs['raw metric'])
+        raw_metric = np.stack(raw_metric)
+        y_init = np.concatenate(y_init, axis=0)
 
         # choose kernel
         kernel = Matern52(self._num_params, variance=1.0, ARD=False)
@@ -77,8 +84,9 @@ class Emulator:
                 acquisition=ExpectedImprovement(model),
                 )
 
-        # put the inital raw metric into the bo_loop results
-        bo_loop.loop_state.results[0].extra_outputs['raw metric'] = output_init.extra_outputs['raw metric']
+        # put the inital raw metrics into the bo_loop results
+        for i, row in enumerate(bo_loop.loop_state.results):
+            row.extra_outputs['raw metric'] = raw_metric[i]
 
         # run optimisation
         bo_loop.run_loop(target_function, iterations)
@@ -91,7 +99,7 @@ class Emulator:
         x = np.stack(x, axis=0)
         raw_metric = np.concatenate(raw_metric)
 
-        return results_to_df(x, self._time_period, raw_metric, metric().name), bo_loop.model
+        return results_to_df(x, self._time_period, raw_metric, metric().name, num_init_points), bo_loop.model
 
     def sensitivity(self, bo_model, interval: Tuple[float, float], num_mc: int = 10000):
 

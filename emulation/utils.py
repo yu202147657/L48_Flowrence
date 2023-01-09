@@ -4,7 +4,7 @@ import numpy as np
 import pandas
 
 
-def results_to_df(x, time_period: Optional[float], y: Optional[List[float]] = None, metric_name: Optional[str] = None):
+def results_to_df(x, time_period: Optional[float], y: Optional[List[float]] = None, metric_name: Optional[str] = None, num_init_points: Optional[int] = None):
     """
     Parameters
     ----------
@@ -18,6 +18,10 @@ def results_to_df(x, time_period: Optional[float], y: Optional[List[float]] = No
     Dataframe representing results as table
     """
     d = {}
+
+    if num_init_points != None:
+        eval_type = ['init'] * num_init_points + ['BO'] * (x.shape[0] - num_init_points)
+        d['eval type'] = eval_type
 
     for i in range(x.shape[1]):
         if time_period is not None:
