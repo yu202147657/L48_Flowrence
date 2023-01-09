@@ -3,10 +3,16 @@ from typing import Tuple, Optional
 import numpy as np
 import pandas
 import scipy
+
+from GPy.kern import Matern52
+from GPy.models import GPRegression
+
 from emukit.core import ContinuousParameter, ParameterSpace
 from emukit.core.loop.user_function import UserFunctionWrapper
-from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
+from emukit.bayesian_optimization.loops import BayesianOptimizationLoop
+from emukit.bayesian_optimization.acquisitions import ExpectedImprovement
 from emukit.sensitivity.monte_carlo import MonteCarloSensitivity
+from emukit.model_wrappers.gpy_model_wrappers import GPyModelWrapper
 
 from emulation.simulator import Simulator
 from emulation.utils import results_to_df
@@ -42,23 +48,40 @@ class Emulator:
 
         x_init = np.random.uniform(*interval, size=(1, self._num_params))
 
-        # you can't pass the UserFunctionResult straight into GPBO
+        # you can't pass the UserFunctionResult straight into BOLoop
         output_init = target_function(x_init)[0]
 
         # also the array for y is not the right shape
         y_init = np.expand_dims(output_init.Y, axis=1)
 
         # parameter space
-        parameter_list = [ContinuousParameter(f"x{i}", *interval) for i in range(self._num_params)]
+        parameter_space = ParameterSpace([ContinuousParameter(f"x{i}", *interval) for i in range(self._num_params)])
+
+        # choose kernel
+        kernel = Matern52(self._num_params, variance=1.0, ARD=False)
+
+        # evaluate GP on initial points
+        gpmodel = GPRegression(x_init, y_init, kernel)
+        gpmodel.optimize()
+
+        # no noise in target_function
+        gpmodel.Gaussian_noise.constrain_fixed(0.001)
+
+        # wrap for emukit
+        model = GPyModelWrapper(gpmodel)
 
         # create the BO loop
-        bo_loop = GPBayesianOptimization(variables_list=parameter_list, X=x_init, Y=y_init, noiseless=True)
+        bo_loop = BayesianOptimizationLoop(
+                space=parameter_space,
+                model=model,
+                acquisition=ExpectedImprovement(model),
+                )
 
         # put the inital raw metric into the bo_loop results
         bo_loop.loop_state.results[0].extra_outputs['raw metric'] = output_init.extra_outputs['raw metric']
 
         # run optimisation
-        bo_loop.run_optimization(target_function, iterations)
+        bo_loop.run_loop(target_function, iterations)
 
         # get x and raw metric values from loop state results
         x = [step.X for step in bo_loop.loop_state.results]
