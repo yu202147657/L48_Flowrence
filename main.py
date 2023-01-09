@@ -9,25 +9,53 @@ from simulation_builder.scenarios import single_intersec_bal, single_intersec_lo
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
-    ### CHOOSE SCENARIO HERE ###
-    g, strategy = single_intersec_bal()
-
-    e = Emulator(g, strategy)
-
     ### INTERVAL SHOULD BE (0.1, 30) AS STANDARD ###
     interval = (0.1, 30)
 
-    results, bo_model = e.bayes_opt(WaitTimeMetric, interval=interval, iterations=5)
+    ### CHOOSE SCENARIO HERE ###
+    g, strategy = single_intersec_bal()
+    e = Emulator(g, strategy)
+
+    results, bo_model = e.bayes_opt(WaitTimeMetric, interval=interval, iterations=250, num_init_points=1)
+    results.to_csv('BO_single_intersec_bal_rbf.csv')
 
     ### BE CAREFUL NOT TO OVERWRITE FILES YOU WANT TO KEEP ###
-    results.to_csv('BO.csv')
-    with open('bo_model.obj', 'wb') as f:
+    with open('BO_single_intersec_bal_rbf.obj', 'wb') as f:
         pickle.dump(bo_model, f)
 
-    results = e.grid_search_opt(WaitTimeMetric, interval=interval, steps_per_axis=5)
+    ### CHOOSE SCENARIO HERE ###
+    g, strategy = single_intersec_lop()
+    e = Emulator(g, strategy)
+
+    results, bo_model = e.bayes_opt(WaitTimeMetric, interval=interval, iterations=250, num_init_points=1)
+    results.to_csv('BO_single_intersec_lop_rbf.csv')
 
     ### BE CAREFUL NOT TO OVERWRITE FILES YOU WANT TO KEEP ###
-    results.to_csv('GS.csv')
+    with open('BO_single_intersec_lop_rbf.obj', 'wb') as f:
+        pickle.dump(bo_model, f)
+
+    ### CHOOSE SCENARIO HERE ###
+    g, strategy = double_intersec_bal()
+    e = Emulator(g, strategy)
+
+    results, bo_model = e.bayes_opt(WaitTimeMetric, interval=interval, iterations=1000, num_init_points=1)
+    results.to_csv('BO_double_intersec_bal_rbf.csv')
+
+    ### BE CAREFUL NOT TO OVERWRITE FILES YOU WANT TO KEEP ###
+    with open('BO_double_intersec_bal_rbf.obj', 'wb') as f:
+        pickle.dump(bo_model, f)
+
+    ### CHOOSE SCENARIO HERE ###
+    g, strategy = double_intersec_lop()
+    e = Emulator(g, strategy)
+
+    results, bo_model = e.bayes_opt(WaitTimeMetric, interval=interval, iterations=1000, num_init_points=1)
+    results.to_csv('BO_double_intersec_lop_rbf.csv')
+
+    ### BE CAREFUL NOT TO OVERWRITE FILES YOU WANT TO KEEP ###
+    with open('BO_double_intersec_lop_rbf.obj', 'wb') as f:
+        pickle.dump(bo_model, f)
+
 
     ### READ .OBJ FILE ### (only need if loading one from previous run)
 
