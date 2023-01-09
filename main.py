@@ -8,14 +8,16 @@ from simulation_builder.scenarios import single_intersec_bal, single_intersec_lo
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
-    g, strategy = single_intersec_lop()
+    g, strategy = single_intersec_bal()
 
     e = Emulator(g, strategy)
 
-    interval = (0.1, 20)
+    interval = (0.1, 30)
 
-    results, bo_model = e.bayes_opt(WaitTimeMetric, interval=interval, iterations=500)
-    results.to_csv('BO.csv')
+    # results, bo_model = e.bayes_opt(WaitTimeMetric, interval=interval, iterations=5)
+    # results.to_csv('BO.csv')
+
+    # breakpoint()
 
     results = e.grid_search_opt(WaitTimeMetric, interval=interval, steps_per_axis=5)
     results.to_csv('GS.csv')

@@ -33,17 +33,17 @@ def single_intersec_g() -> Graph:
 def single_intersec_f_bal() -> CustomEndpointFlowStrategy:
 
     start_flows={
-            (0, -400): 10,
-            (0, 400): 10,
-            (-400, 0): 10,
-            (400, 0): 10,
+            (0, -400): 8,
+            (0, 400): 7,
+            (-400, 0): 6,
+            (400, 0): 5,
             }
 
     end_flows={
-            (0, -400): 10,
+            (0, -400): 5,
             (0, 400): 10,
-            (-400, 0): 10,
-            (400, 0): 10,
+            (-400, 0): 8,
+            (400, 0): 7,
             }
 
     return CustomEndpointFlowStrategy(start_flows=start_flows, end_flows=end_flows)
