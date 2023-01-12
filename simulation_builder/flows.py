@@ -82,6 +82,21 @@ class CustomEndpointFlowStrategy(FlowStrategy):
             return [Flow(route, interval=self._default)]
 
 
+class ManualFlowStrategy(FlowStrategy):
+    """
+    Takes a dictionary mapping routes defined by start/end pairs to flow intervals. Assumes flows are uniquely defined
+    by their start and end points.
+    """
+    def __init__(self, flows: Dict[Tuple[Tuple, Tuple], float]):
+        self._flows = flows
+
+    def gen_flows(self, route: List[Tuple[int, int]]) -> List[Flow]:
+        start, end = route[0], route[-1]
+        if (start, end) in self._flows:
+            return [Flow(route, interval=self._flows[(start, end)])]
+        return []
+
+
 def graph_to_flow(g: Graph, strategy: FlowStrategy = FlowStrategy()) -> List[Dict]:
     paths = all_pairs_shortest_paths(g)
     flows = []

@@ -121,7 +121,7 @@ class Emulator:
         y_init = np.concatenate(y_init, axis=0)
 
         # choose kernel
-        kernel = Matern52(self._num_params, variance=1.0, ARD=False)
+        kernel = Matern52(self._num_params, variance=2.0, ARD=False)
 
         # evaluate GP on initial points
         gpmodel = GPRegression(x_init, y_init, kernel)

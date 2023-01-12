@@ -3,8 +3,10 @@ import pickle
 
 from emulation.emulator import Emulator
 from emulation.metrics import CompletedJourneysMetric, WaitTimeMetric
-from simulation_builder.scenarios import single_intersec_bal, single_intersec_lop, double_intersec_bal, double_intersec_lop
-
+from emulation.utils import run_simulation
+from plot import plot_metric_results
+from simulation_builder.scenarios import single_intersec_bal, single_intersec_lop, double_intersec_bal, \
+    double_intersec_lop, single_intersec_lop_2
 
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
@@ -13,18 +15,23 @@ if __name__ == "__main__":
     interval = (0.1, 30)
 
     ### CHOOSE SCENARIO HERE ###
-    g, strategy = single_intersec_bal()
+    g, strategy = single_intersec_lop_2()
+    # g, strategy = single_intersec_lop()
+    # g, strategy = double_intersec_bal()
+    # run_simulation(g, strategy, traffic_light_phases=None)
     e = Emulator(g, strategy)
 
     results, bo_model = e.bayes_opt(
-            WaitTimeMetric,
+            CompletedJourneysMetric,
             interval=interval,
             max_iterations=1000,
-            progress_N=100,
+            progress_N=200,
             num_init_points=1)
     results.to_csv('BO_single_intersec_bal_m52.csv')
 
-    breakpoint()
+    plot_metric_results(results_file="BO_single_intersec_bal_m52.csv")
+    #
+    # breakpoint()
 
     ### BE CAREFUL NOT TO OVERWRITE FILES YOU WANT TO KEEP ###
     #with open('BO_single_intersec_bal_m52.obj', 'wb') as f:
