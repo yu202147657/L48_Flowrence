@@ -47,15 +47,17 @@ class ProgressStoppingCondition(StoppingCondition):
         # get current output
         current_y = loop_state.Y[-1][0]
 
+        current_x = loop_state.X[-1]
+
         # new best
         if current_y < self.best:
-            print(f'iteration {loop_state.iteration}: {current_y} - new best!')
+            print(f'iteration {loop_state.iteration}: {current_x} {current_y} - new best!')
             self.count = 0
             self.best = current_y
 
         # not new best
         else:
-            print(f'iteration {loop_state.iteration}: {current_y}')
+            print(f'iteration {loop_state.iteration}: {current_x} {current_y}')
             self.count += 1
 
         # if reached max_iterations return True regardless
