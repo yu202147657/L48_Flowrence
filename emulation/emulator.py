@@ -91,6 +91,8 @@ class Emulator:
 
     def bayes_opt(
             self, 
+            kernel_func,
+            kernel_kwargs,
             metric, 
             interval: Tuple[float, float],
             max_iterations: int,
@@ -122,8 +124,8 @@ class Emulator:
         raw_metric = np.stack(raw_metric)
         y_init = np.concatenate(y_init, axis=0)
 
-        # choose kernel
-        kernel = Matern52(self._num_params, variance=2.0, ARD=False)
+        # init kernel
+        kernel = kernel_func(self._num_params, **kernel_kwargs)
 
         # evaluate GP on initial points
         gpmodel = GPRegression(x_init, y_init, kernel)

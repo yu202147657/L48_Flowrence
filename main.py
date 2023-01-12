@@ -1,6 +1,8 @@
 import numpy as np
 import pickle
 
+from GPy.kern import Matern52, RBF
+
 from emulation.emulator import Emulator
 from emulation.metrics import CompletedJourneysMetric, WaitTimeMetric
 from emulation.utils import run_simulation
@@ -13,18 +15,23 @@ if __name__ == "__main__":
 
     interval = (0.1, 30)
 
-    g, strategy = single_intersec_bal_2()
+    g, strategy = single_intersec_lop_2()
     run_simulation(g, strategy, n=1500, traffic_light_phases=None)
+
+    kernel_func = Matern52
+    kernel_kwargs = {'variance': 2}
 
     optimise = True
     if optimise:
         e = Emulator(g, strategy)
 
         results, bo_model = e.bayes_opt(
+            kernel_func,
+            kernel_kwargs,
             CompletedJourneysMetric,
             interval=interval,
             max_iterations=1000,
-            progress_N=200,
+            progress_N=300,
             num_init_points=1)
         results.to_csv('BO_single_intersec_bal_m52.csv')
 
