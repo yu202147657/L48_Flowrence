@@ -1,4 +1,5 @@
 import math
+from abc import ABC, abstractmethod
 from logging import warning
 
 from numpy import random
@@ -34,10 +35,21 @@ class Flow:
         }
 
 
-class FlowStrategy:
-    # Default flow strategy creates one flow per route.
+class FlowStrategy(ABC):
+    @abstractmethod
     def gen_flows(self, route: List[Tuple[int, int]]) -> List[Flow]:
-        return [Flow(route)]
+        pass
+
+
+class UniformFlowStrategy(FlowStrategy):
+    """
+    Creates exactly one flow per route, all initialised with the same interval
+    """
+    def __init__(self, interval=5.0):
+        self._interval = interval
+
+    def gen_flows(self, route: List[Tuple[int, int]]) -> List[Flow]:
+        return [Flow(route, interval=self._interval)]
 
 
 class RandomFlowStrategy(FlowStrategy):
@@ -97,7 +109,7 @@ class ManualFlowStrategy(FlowStrategy):
         return []
 
 
-def graph_to_flow(g: Graph, strategy: FlowStrategy = FlowStrategy()) -> List[Dict]:
+def graph_to_flow(g: Graph, strategy: FlowStrategy = UniformFlowStrategy()) -> List[Dict]:
     paths = all_pairs_shortest_paths(g)
     flows = []
     for start in paths:

@@ -1,7 +1,7 @@
 from typing import Tuple
 
 from simulation_builder.graph import Graph
-from simulation_builder.flows import CustomEndpointFlowStrategy, FlowStrategy, ManualFlowStrategy
+from simulation_builder.flows import CustomEndpointFlowStrategy, FlowStrategy, ManualFlowStrategy, UniformFlowStrategy
 
 
 def single_intersec_bal() -> Tuple[Graph, FlowStrategy]:
@@ -19,6 +19,11 @@ def single_intersec_lop_2() -> Tuple[Graph, FlowStrategy]:
         ((400, 0), (-400, 0)): 100
     })
 
+    return single_intersec_g(), strategy
+
+
+def single_intersec_bal_2() -> Tuple[Graph, FlowStrategy]:
+    strategy = UniformFlowStrategy(interval=10)
     return single_intersec_g(), strategy
 
 

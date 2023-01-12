@@ -20,7 +20,7 @@ from emukit.model_wrappers.gpy_model_wrappers import GPyModelWrapper
 from emulation.simulator import Simulator
 from emulation.utils import results_to_df
 
-from simulation_builder.flows import FlowStrategy
+from simulation_builder.flows import FlowStrategy, UniformFlowStrategy
 from simulation_builder.graph import Graph
 
 
@@ -76,7 +76,7 @@ class Emulator:
     def __init__(self, graph: Graph, flow_strategy: FlowStrategy, simulation_iterations: int = 1000,
                  fixed_time_period: Optional[float] = None):
         self._g = graph
-        self._strategy = FlowStrategy() if flow_strategy is None else flow_strategy
+        self._strategy = UniformFlowStrategy() if flow_strategy is None else flow_strategy
         self._sim_iterations = simulation_iterations
         self._time_period = fixed_time_period
 

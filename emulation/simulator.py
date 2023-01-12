@@ -6,7 +6,7 @@ from typing import Optional
 import numpy as np
 import cityflow as cf
 
-from simulation_builder.flows import FlowStrategy, graph_to_flow
+from simulation_builder.flows import FlowStrategy, graph_to_flow, UniformFlowStrategy
 from simulation_builder.graph import Graph
 from simulation_builder.roadnets import graph_to_roadnet
 
@@ -26,7 +26,7 @@ class Simulator:
 
         self.g = g
         self.metric = metric
-        self.strategy = FlowStrategy() if strategy is None else strategy
+        self.strategy = UniformFlowStrategy() if strategy is None else strategy
         self.timing_period = timing_period
         self.steps = steps
 
