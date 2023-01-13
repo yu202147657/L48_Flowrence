@@ -165,6 +165,8 @@ class Emulator:
 
     def sensitivity(self, bo_model, interval: Tuple[float, float], num_mc: int = 10000):
 
+        np.random.seed(42)
+
         parameter_list = [ContinuousParameter(f"x{i}", *interval) for i in range(self._num_params)]
 
         senstivity = MonteCarloSensitivity(model=bo_model, input_domain=ParameterSpace(parameter_list))
