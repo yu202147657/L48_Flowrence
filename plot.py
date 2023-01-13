@@ -8,6 +8,7 @@ def plot_metric_results(df, file_name):
     results = df[metric_name]
     cummin = results.cummin()
 
+    plt.figure()
     plt.style.use('ggplot')
     plt.rc('font', family='serif')
     plt.plot(np.arange(len(results)), results)
