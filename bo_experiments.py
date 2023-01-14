@@ -12,20 +12,20 @@ from simulation_builder.scenarios import single_intersec_lop_2, single_intersec_
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
-    np.random.seed(42)
-
+    scenario = 'DB2'
     interval = (1, 30)
 
     # DEFINE ID
     metric_name = 'CJ'
-
-    lengthscale = 2
     variance = 2
-    kernel_name = 'RQ'
+    lengthscale = 2
+    num_init_points = 50
 
-    for scenario in ['DL2', 'DB2']:
+    for kernel_name in ['M52', 'RBF', 'RQ']:
 
-        for num_init_points in [5, 25, 50]:
+        for seed in [1, 42, 98]:
+
+            np.random.seed(seed)
 
             # ID -> CONFIG
             if scenario == 'SL2':
@@ -60,12 +60,12 @@ if __name__ == "__main__":
                 kernel_kwargs,
                 metric,
                 interval=interval,
-                max_iterations=10,
-                progress_N=20,
+                max_iterations=100,
+                progress_N=50,
                 num_init_points=num_init_points)
 
             # SAVE DATA
-            file_id = f'BO_{scenario}_{metric_name}_{kernel_name}_{variance}_{lengthscale}_{num_init_points}'
+            file_id = f'BO_{scenario}_{metric_name}_{kernel_name}_{variance}_{lengthscale}_{num_init_points}_{seed}'
             results.to_csv(f'csv_files/{file_id}.csv')
 
             if metric_name == 'CJ':
