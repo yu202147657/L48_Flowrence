@@ -17,55 +17,62 @@ if __name__ == "__main__":
     interval = (1, 30)
 
     # DEFINE ID
-    scenario = 'DB2'
-    metric_name = 'CJ'
+    metric_name = 'WT'
 
     lengthscale = 2
     variance = 2
     kernel_name = 'RQ'
 
-    num_init_points = 100
+    for scenario in ['DL2', 'DB2']:
 
-    # ID -> CONFIG
-    if scenario == 'SL2':
-        g, strategy = single_intersec_lop_2()
-    elif scenario == 'SB2':
-        g, strategy = single_intersec_bal_2()
-    elif scenario == 'DL2':
-        g, strategy = double_intersec_lop_2()
-    elif scenario == 'DB2':
-        g, strategy = double_intersec_bal_2()
+        for num_init_points in [1]:
 
-    if kernel_name == 'M52':
-        kernel_func = Matern52
-    elif kernel_name == 'RBF':
-        kernel_func = RBF
-    elif kernel_name == 'RQ':
-        kernel_func = RatQuad
+            # ID -> CONFIG
+            if scenario == 'SL2':
+                g, strategy = single_intersec_lop_2()
+            elif scenario == 'SB2':
+                g, strategy = single_intersec_bal_2()
+            elif scenario == 'DL2':
+                g, strategy = double_intersec_lop_2()
+            elif scenario == 'DB2':
+                g, strategy = double_intersec_bal_2()
 
-    if metric_name == 'WT':
-        metric = WaitTimeMetric
-    elif metric_name == 'CJ':
-        metric = CompletedJourneysMetric
+            if kernel_name == 'M52':
+                kernel_func = Matern52
+            elif kernel_name == 'RBF':
+                kernel_func = RBF
+            elif kernel_name == 'RQ':
+                kernel_func = RatQuad
 
-    kernel_kwargs = {'variance': variance, 'lengthscale': lengthscale}
+            if metric_name == 'WT':
+                metric = WaitTimeMetric
+            elif metric_name == 'CJ':
+                metric = CompletedJourneysMetric
 
-    # CREATE EMULATOR
-    e = Emulator(g, strategy)
+            kernel_kwargs = {'variance': variance, 'lengthscale': lengthscale}
 
-    # RUN BAYESOPT
-    results, bo_model = e.bayes_opt(
-        kernel_func,
-        kernel_kwargs,
-        metric,
-        interval=interval,
-        max_iterations=10,
-        progress_N=100,
-        num_init_points=num_init_points)
+            # CREATE EMULATOR
+            e = Emulator(g, strategy)
 
-    # SAVE DATA
-    file_id = f'BO_{scenario}_{metric_name}_{kernel_name}_{variance}_{lengthscale}_{num_init_points}'
-    results.to_csv(f'csv_files/{file_id}.csv')
-    plt = plot_metric_results(results, f'plots/{file_id}.png')
-    with open(f'bo_models/{file_id}.obj', 'wb') as f:
-        pickle.dump(bo_model, f)
+            # RUN BAYESOPT
+            results, bo_model = e.bayes_opt(
+                kernel_func,
+                kernel_kwargs,
+                metric,
+                interval=interval,
+                max_iterations=10,
+                progress_N=20,
+                num_init_points=num_init_points)
+
+            # SAVE DATA
+            file_id = f'BO_{scenario}_{metric_name}_{kernel_name}_{variance}_{lengthscale}_{num_init_points}'
+            results.to_csv(f'csv_files/{file_id}.csv')
+
+            if metric_name == 'CJ':
+                minimisation=False
+            else:
+                minimisation=True
+
+            plt = plot_metric_results(results, f'plots/{file_id}.png', minimisation)
+            with open(f'bo_models/{file_id}.obj', 'wb') as f:
+                pickle.dump(bo_model, f)

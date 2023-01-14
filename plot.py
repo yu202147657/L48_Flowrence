@@ -3,16 +3,20 @@ import numpy as np
 import pandas as pd
 
 
-def plot_metric_results(df, file_name):
+def plot_metric_results(df, file_name, minimisation=True):
     metric_name = df.columns[-1]
     results = df[metric_name]
-    cummin = results.cummin()
+    
+    if minimisation:
+        cuma = results.cummin()
+    else:
+        cuma = results.cummax()
 
     plt.figure()
     plt.style.use('ggplot')
     plt.rc('font', family='serif')
     plt.plot(np.arange(len(results)), results)
-    plt.plot(np.arange(len(results)), cummin)
+    plt.plot(np.arange(len(results)), cuma)
     plt.legend(['actual', 'cumulative'])
     plt.title(metric_name.capitalize())
     plt.savefig(file_name)
