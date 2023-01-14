@@ -17,7 +17,7 @@ if __name__ == "__main__":
     interval = (1, 30)
 
     # DEFINE ID
-    metric_name = 'WT'
+    metric_name = 'CJ'
 
     lengthscale = 2
     variance = 2
@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     for scenario in ['DL2', 'DB2']:
 
-        for num_init_points in [1]:
+        for num_init_points in [5, 25, 50]:
 
             # ID -> CONFIG
             if scenario == 'SL2':
@@ -60,7 +60,7 @@ if __name__ == "__main__":
                 kernel_kwargs,
                 metric,
                 interval=interval,
-                max_iterations=10,
+                max_iterations=100,
                 progress_N=20,
                 num_init_points=num_init_points)
 
