@@ -60,7 +60,7 @@ if __name__ == "__main__":
                 kernel_kwargs,
                 metric,
                 interval=interval,
-                max_iterations=100,
+                max_iterations=10,
                 progress_N=20,
                 num_init_points=num_init_points)
 
@@ -73,6 +73,6 @@ if __name__ == "__main__":
             else:
                 minimisation=True
 
-            plt = plot_metric_results(results, f'plots/{file_id}.png', minimisation)
+            plt = plot_metric_results(results, file_id, minimisation)
             with open(f'bo_models/{file_id}.obj', 'wb') as f:
                 pickle.dump(bo_model, f)

@@ -3,9 +3,11 @@ import numpy as np
 import pandas as pd
 
 
-def plot_metric_results(df, file_name, minimisation=True):
+def plot_metric_results(df, file_id, minimisation=True):
     metric_name = df.columns[-1]
     results = df[metric_name]
+
+    file_name = f'plots/{file_id}.png'
     
     if minimisation:
         cuma = results.cummin()
@@ -18,7 +20,7 @@ def plot_metric_results(df, file_name, minimisation=True):
     plt.plot(np.arange(len(results)), results)
     plt.plot(np.arange(len(results)), cuma)
     plt.legend(['actual', 'cumulative'])
-    plt.title(metric_name.capitalize())
+    plt.title(file_id)
     plt.savefig(file_name)
 
     return plt
