@@ -15,77 +15,48 @@ if __name__ == "__main__":
 
     interval = (0.1, 30)
 
-    g, strategy = single_intersec_lop_2()
-    run_simulation(g, strategy, n=1500, traffic_light_phases=None)
+    for scenario in ['SL2', 'SB2']:
 
-    kernel_func = Matern52
-    kernel_kwargs = {'variance': 2}
+        for kernel_name  in  ['RBF', 'M52']:
 
-    optimise = True
-    if optimise:
-        e = Emulator(g, strategy)
+            # define id
+            scenario = 'SL2'
+            num_init_points = 1
+            metric_name = 'WT'
+            variance = 2
 
-        results, bo_model = e.bayes_opt(
-            kernel_func,
-            kernel_kwargs,
-            CompletedJourneysMetric,
-            interval=interval,
-            max_iterations=1000,
-            progress_N=300,
-            num_init_points=1)
-        results.to_csv('BO_single_intersec_bal_m52.csv')
+            # id -> config
+            if scenario == 'SL2':
+                g, strategy = single_intersec_lop_2()
+            if scenario == 'SB2':
+                g, strategy = single_intersec_bal_2()
 
-    plot_metric_results(results_file="BO_single_intersec_bal_m52.csv")
-    #
-    # breakpoint()
+            if kernel_name == 'M52':
+                kernel_func = Matern52
+            elif kernel_name == 'RBF':
+                kernel_func = RBF
 
-    ### BE CAREFUL NOT TO OVERWRITE FILES YOU WANT TO KEEP ###
-    #with open('BO_single_intersec_bal_m52.obj', 'wb') as f:
-    #    pickle.dump(bo_model, f)
+            if metric_name == 'WT':
+                metric = WaitTimeMetric
 
-    #### CHOOSE SCENARIO HERE ###
-    #g, strategy = single_intersec_lop()
-    #e = Emulator(g, strategy)
+            kernel_kwargs = {'variance': variance}
 
-    #results, bo_model = e.bayes_opt(WaitTimeMetric, interval=interval, iterations=1000, num_init_points=1)
-    #results.to_csv('BO_single_intersec_lop_m52.csv')
+            e = Emulator(g, strategy)
 
-    #breakpoint()
+            results, bo_model = e.bayes_opt(
+                kernel_func,
+                kernel_kwargs,
+                metric,
+                interval=interval,
+                max_iterations=250,
+                progress_N=500,
+                num_init_points=num_init_points)
 
-    #### BE CAREFUL NOT TO OVERWRITE FILES YOU WANT TO KEEP ###
-    #with open('BO_single_intersec_lop_m52.obj', 'wb') as f:
-    #    pickle.dump(bo_model, f)
+            file_id = f'BO_{scenario}_{metric_name}_{kernel_name}_{variance}_{num_init_points}'
 
-    #### CHOOSE SCENARIO HERE ###
-    #g, strategy = double_intersec_bal()
-    #e = Emulator(g, strategy)
+            results.to_csv(f'csv_files/{file_id}.csv')
 
-    #results, bo_model = e.bayes_opt(WaitTimeMetric, interval=interval, iterations=1000, num_init_points=1)
-    #results.to_csv('BO_double_intersec_bal_rbf.csv')
+            plot_metric_results(results, f'plots/{file_id}.png')
 
-    #### BE CAREFUL NOT TO OVERWRITE FILES YOU WANT TO KEEP ###
-    #with open('BO_double_intersec_bal_rbf.obj', 'wb') as f:
-    #    pickle.dump(bo_model, f)
-
-    #### CHOOSE SCENARIO HERE ###
-    #g, strategy = double_intersec_lop()
-    #e = Emulator(g, strategy)
-
-    #results, bo_model = e.bayes_opt(WaitTimeMetric, interval=interval, iterations=1000, num_init_points=1)
-    #results.to_csv('BO_double_intersec_lop_rbf.csv')
-
-    #### BE CAREFUL NOT TO OVERWRITE FILES YOU WANT TO KEEP ###
-    #with open('BO_double_intersec_lop_rbf.obj', 'wb') as f:
-    #    pickle.dump(bo_model, f)
-
-
-    ### READ .OBJ FILE ### (only need if loading one from previous run)
-
-    #with open('bo_model.obj', 'rb') as f:
-    #    bo_model = pickle.load(f)
-
-    ### SENSITIVITY ANALYSIS ###
-
-    # main_effects, total_effects = e.sensitivity(bo_model, interval=(0.1, 20))
-    # print('\nSENSITIVITY ANALYSIS\n', 'Main Effects\n', main_effects)
-    # print('Total Effects\n', total_effects, '\n')
+            with open(f'bo_models/{file_id}.obj', 'wb') as f:
+                pickle.dump(bo_model, f)
