@@ -39,7 +39,7 @@ def single_intersec_g() -> Graph:
 
 
 def double_intersec_bal_2() -> Tuple[Graph, FlowStrategy]:
-    strategy = UniformFlowStrategy(interval=10)
+    strategy = UniformFlowStrategy(interval=20)
     return double_intersec_g(), strategy
 
 
