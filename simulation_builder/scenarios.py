@@ -44,7 +44,14 @@ def double_intersec_bal_2() -> Tuple[Graph, FlowStrategy]:
 
 
 def double_intersec_lop_2() -> Tuple[Graph, FlowStrategy]:
-    return None # NOT YET IMPLEMENTED
+    strategy = ManualFlowStrategy({
+        ((-400, 0), (800, 0)): 4,
+        ((800, 0), (-400, 0)): 4,
+        ((0, -400), (0, 400)): 100,
+        ((400, 400), (400, -400)): 100,
+    })
+
+    return double_intersec_g(), strategy
 
 
 def double_intersec_g() -> Graph:
