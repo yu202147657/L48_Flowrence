@@ -10,6 +10,8 @@ from plot import plot_sensitivity
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
+    np.random.seed(42)
+
     interval = (1, 30)
 
     for scenario in ['SL2', 'SB2']:

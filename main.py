@@ -15,6 +15,8 @@ if __name__ == "__main__":
 
     interval = (0.1, 30)
 
+    np.random.seed(42)
+
     for scenario in ['SL2', 'SB2']:
 
         for kernel_name  in  ['RBF', 'M52']:

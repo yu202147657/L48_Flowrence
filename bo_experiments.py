@@ -12,17 +12,19 @@ from simulation_builder.scenarios import single_intersec_lop_2, single_intersec_
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
+    np.random.seed(42)
+
     interval = (1, 30)
 
     # DEFINE ID
-    scenario = 'DL2'
+    scenario = 'DB2'
     metric_name = 'CJ'
 
     lengthscale = 2
     variance = 2
-    kernel_name = 'M52'
+    kernel_name = 'RQ'
 
-    num_init_points = 1
+    num_init_points = 100
 
     # ID -> CONFIG
     if scenario == 'SL2':
@@ -39,7 +41,7 @@ if __name__ == "__main__":
     elif kernel_name == 'RBF':
         kernel_func = RBF
     elif kernel_name == 'RQ':
-        kernel_func = RatQaud
+        kernel_func = RatQuad
 
     if metric_name == 'WT':
         metric = WaitTimeMetric
@@ -57,8 +59,8 @@ if __name__ == "__main__":
         kernel_kwargs,
         metric,
         interval=interval,
-        max_iterations=1,
-        progress_N=200,
+        max_iterations=10,
+        progress_N=100,
         num_init_points=num_init_points)
 
     # SAVE DATA
