@@ -109,6 +109,20 @@ class ManualFlowStrategy(FlowStrategy):
         return []
 
 
+class CompositeFlowStrategy(FlowStrategy):
+    """
+    Takes a list of flow strategies and combines them into one.
+    """
+    def __init__(self, strategies: List[FlowStrategy]):
+        self._strategies = strategies
+
+    def gen_flows(self, route: List[Tuple[int, int]]) -> List[Flow]:
+        flows = []
+        for strategy in self._strategies:
+            flows += strategy.gen_flows(route)
+        return flows
+
+
 def graph_to_flow(g: Graph, strategy: FlowStrategy = UniformFlowStrategy()) -> List[Dict]:
     paths = all_pairs_shortest_paths(g)
     flows = []
