@@ -7,7 +7,7 @@ Introducing Flowrence - a Bayesian framework for optimising traffic flow in citi
 It is recommended to use a virtual environment for this project. First, clone the repository:
 
 ```
-git clone git@github.com:yu202147657/L48_Traffic.git && cd L48_Traffic
+git clone git@github.com:yu202147657/L48_Flowrence.git && cd L48_Flowrence
 ```
 
 Then create and activate the venv:
@@ -26,6 +26,7 @@ CityFlow is the traffic simulator used for this project. It can be installed wit
 
 ```
 sudo apt update && sudo apt install -y build-essential cmake
+sudo apt-get install python3-dev
 git clone https://github.com/cityflow-project/CityFlow.git
 pip install ./CityFlow
 ```
