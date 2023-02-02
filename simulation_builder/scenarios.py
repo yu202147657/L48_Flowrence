@@ -102,9 +102,9 @@ def cambridge_scenario() -> Tuple[Graph, FlowStrategy]:
 
     strategy = CompositeFlowStrategy([
         UniformFlowStrategy(interval=20),
-        ManualFlowStrategy({
-            ((400, 0), (400, 1300)): 15
-        })
+        # ManualFlowStrategy({
+        #     ((400, 0), (400, 1300)): 20
+        # })
     ])
 
     return Graph(vertices, edges), strategy

@@ -2,7 +2,7 @@ import numpy as np
 import pickle
 
 from emulation.emulator import Emulator
-from simulation_builder.scenarios import double_intersec_bal_2, double_intersec_lop_2
+from simulation_builder.scenarios import double_intersec_bal_2, double_intersec_lop_2, cambridge_scenario
 
 from plot import plot_sensitivity
 
@@ -11,32 +11,28 @@ if __name__ == "__main__":
 
     np.random.seed(42)
 
-    interval = (1, 30)
+    interval = (10, 30)
 
-    for scenario in ['DB2', 'DL2']:
+    for kernel_name in ['RQ']:
+        g, strategy = cambridge_scenario()
 
-        for kernel_name in ['M52', 'RQ', 'RBF']:
+        e = Emulator(g, strategy)
 
-            if scenario == 'DL2':
-                g, strategy = double_intersec_lop_2()
-            elif scenario == 'DB2':
-                g, strategy = double_intersec_bal_2()
+        # define id
+        lengthscale = 2
+        num_init_points = 50
+        metric_name = 'CJ'
+        variance = 2
 
-            e = Emulator(g, strategy)
+        file_id = f'BO_cambridge_lop_CJ_50'
 
-            # define id
-            lengthscale = 2
-            num_init_points = 50
-            metric_name = 'WT'
-            variance = 2
+        with open(f'bo_models/{file_id}.obj', 'rb') as f:
+            bo_model = pickle.load(f)
 
-            file_id = f'BO_{scenario}_{metric_name}_{kernel_name}_{variance}_{lengthscale}_{num_init_points}'
+        main_effects, total_effects = e.sensitivity(bo_model, interval=interval)
+        print(main_effects)
+        print(total_effects)
 
-            with open(f'bo_models/{file_id}.obj', 'rb') as f:
-                bo_model = pickle.load(f)
-
-            main_effects, total_effects = e.sensitivity(bo_model, interval=interval)
-
-            plt = plot_sensitivity(main_effects, total_effects, f'sensitivity_plots/{file_id}.png')
+        plt = plot_sensitivity(main_effects, total_effects, f'sensitivity_plots/{file_id}.png')
 
 

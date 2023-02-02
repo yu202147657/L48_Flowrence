@@ -161,7 +161,7 @@ class Emulator:
 
         return results_to_df(x, self._time_period, raw_metric, metric().name, num_init_points), bo_loop.model
 
-    def sensitivity(self, bo_model, interval: Tuple[float, float], num_mc: int = 10000):
+    def sensitivity(self, bo_model, interval: Tuple[float, float], num_mc: int = 50000):
 
         parameter_list = [ContinuousParameter(f"x{i}", *interval) for i in range(self._num_params)]
 

@@ -1,5 +1,7 @@
 import numpy as np
 import pickle
+import matplotlib.pyplot as plt
+import pandas as pd
 
 from GPy.kern import Matern52, RBF, RatQuad
 
@@ -7,77 +9,55 @@ from emulation.emulator import Emulator
 from emulation.metrics import CompletedJourneysMetric, WaitTimeMetric
 from emulation.utils import run_simulation
 from plot import plot_metric_results
-from simulation_builder.scenarios import single_intersec_lop_2, single_intersec_bal_2, double_intersec_lop_2, double_intersec_bal_2
+from simulation_builder.scenarios import single_intersec_lop_2, single_intersec_bal_2, double_intersec_lop_2, \
+    double_intersec_bal_2, cambridge_scenario
+
 
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
 
-    interval = (1, 30)
-
-    # DEFINE ID
-    variance = 2
-    lengthscale = 2
+    interval = (10, 30)
+    N = 300
     num_init_points = 50
 
-    for metric_name in ['WT']:
+    # metric = WaitTimeMetric
+    # metric_name = "WT"
+    metric = CompletedJourneysMetric
+    metric_name = "CJ"
 
-        for scenario in ['DB2', 'DL2']:
+    plt.style.use('ggplot')
+    plt.rc('font', family='serif')
+    file_id = f'BO_cambridge_lop_{metric_name}_{num_init_points}'
 
-            for kernel_name in ['M52', 'RBF', 'RQ']:
+    print(file_id)
+    g, strategy = cambridge_scenario()
 
-                for seed in [1, 42, 98]:
+    kernel_func = RatQuad
+    kernel_kwargs = {'variance': 1, 'lengthscale': 2}
 
-                    file_id = f'BO_{scenario}_{metric_name}_{kernel_name}_{variance}_{lengthscale}_{num_init_points}_{seed}'
+    e = Emulator(g, strategy)
 
-                    print(file_id)
+    results, bo_model = e.bayes_opt(
+        kernel_func,
+        kernel_kwargs,
+        metric,
+        interval=interval,
+        max_iterations=N,
+        progress_N=300,
+        num_init_points=num_init_points)
 
-                    np.random.seed(seed)
+    with open(f'bo_models/{file_id}.obj', 'wb') as f:
+        pickle.dump(bo_model, f)
 
-                    # ID -> CONFIG
-                    if scenario == 'SL2':
-                        g, strategy = single_intersec_lop_2()
-                    elif scenario == 'SB2':
-                        g, strategy = single_intersec_bal_2()
-                    elif scenario == 'DL2':
-                        g, strategy = double_intersec_lop_2()
-                    elif scenario == 'DB2':
-                        g, strategy = double_intersec_bal_2()
+    results.to_csv(f'csv_files/{file_id}.csv')
+    data = results[results.columns[-1]]
 
-                    if kernel_name == 'M52':
-                        kernel_func = Matern52
-                    elif kernel_name == 'RBF':
-                        kernel_func = RBF
-                    elif kernel_name == 'RQ':
-                        kernel_func = RatQuad
-
-                    if metric_name == 'WT':
-                        metric = WaitTimeMetric
-                    elif metric_name == 'CJ':
-                        metric = CompletedJourneysMetric
-
-                    kernel_kwargs = {'variance': variance, 'lengthscale': lengthscale}
-
-                    # CREATE EMULATOR
-                    e = Emulator(g, strategy)
-
-                    # RUN BAYESOPT
-                    results, bo_model = e.bayes_opt(
-                        kernel_func,
-                        kernel_kwargs,
-                        metric,
-                        interval=interval,
-                        max_iterations=100,
-                        progress_N=50,
-                        num_init_points=num_init_points)
-
-                    # SAVE DATA
-                    results.to_csv(f'csv_files/{file_id}.csv')
-
-                    if metric_name == 'CJ':
-                        minimisation=False
-                    else:
-                        minimisation=True
-
-                    plot_metric_results(results, file_id, minimisation)
-                    with open(f'bo_models/{file_id}.obj', 'wb') as f:
-                        pickle.dump(bo_model, f)
+    plt.plot(np.arange(len(data) - num_init_points) + num_init_points, data[num_init_points:], zorder=1)
+    # plt.scatter(num_init_points, data[num_init_points], s=100, zorder=2)
+    print(f"{metric_name} Results: ")
+    print(data[num_init_points:])
+    # plt.legend(fontsize="large")
+    plt.xlabel("Iterations")
+    plt.ylabel("Completed Journeys" if metric_name == "CJ" else "Average Wait Time")
+    plt.savefig(f"plots/kernel_tuning/cambridge_{metric_name}_", bbox_inches='tight', pad_inches=0.2)
+    plt.close()

@@ -157,8 +157,9 @@ def gen_intersections(g: Graph, traffic_light_phases: Optional[Dict], intersecti
                 processed_light_phases = [{"time": 30, "availableRoadLinks": list(phase)}
                                           for phase in light_phases if len(phase) > 0]
             else:
+                timings = traffic_light_phases[u] if u in traffic_light_phases else [10, 10, 10, 10]
                 processed_light_phases = [{"time": t, "availableRoadLinks": list(phase)}
-                                          for phase, t in zip(light_phases, traffic_light_phases[u])
+                                          for phase, t in zip(light_phases, timings)
                                           if len(phase) > 0]
 
             intersection["trafficLight"] = {
